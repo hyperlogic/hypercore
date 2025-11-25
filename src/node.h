@@ -18,14 +18,16 @@ class DebugRenderer;
 class Node : public std::enable_shared_from_this<Node> {
  public:
   Node(size_t idx,
-       const std::string name,
-       std::shared_ptr<Node> parent,
+       const std::string& name,
+       const std::shared_ptr<Node>& parent,
        const glm::mat4& rel_xform)
-      : idx_(idx),
-        rel_xform_(rel_xform),
+      : rel_xform_(rel_xform),
         abs_xform_(rel_xform),
         name_(name),
-        parent_(parent) {}
+        parent_(parent),
+        idx_(idx) {}
+  Node(const Node&) = delete;
+  Node& operator=(const Node&) = delete;
   size_t idx() const { return idx_; }
   const std::string& name() const { return name_; }
   std::shared_ptr<Node> parent() { return parent_.lock(); }
@@ -46,11 +48,12 @@ class Node : public std::enable_shared_from_this<Node> {
   void BuildDepthFirstAbsXformVec(std::vector<glm::mat4>& result);
   void BuildDepthFirstNodeVec(std::vector<std::shared_ptr<Node>>& result);
   size_t GetSubtreeSize() const;
-  void DebugDraw(std::shared_ptr<DebugRenderer>, const glm::mat4& root_mat,
+  void DebugDraw(const std::shared_ptr<DebugRenderer>& debug_renderer,
+                 const glm::mat4& root_mat,
                  float axis_line = 0.1f);
   void Print() const;
 
- protected:
+ private:
   glm::mat4 rel_xform_;
   glm::mat4 abs_xform_;
   std::string name_;

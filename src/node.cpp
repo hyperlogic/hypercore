@@ -83,7 +83,7 @@ size_t Node::GetSubtreeSize() const {
   return count;
 }
 
-void Node::DebugDraw(std::shared_ptr<DebugRenderer> debug_renderer,
+void Node::DebugDraw(const std::shared_ptr<DebugRenderer>& debug_renderer,
                      const glm::mat4& root_mat,
                      float axis_len) {
   assert(debug_renderer);

@@ -14,6 +14,8 @@
 #include "src/node.h"
 #include "src/mesh.h"
 
+namespace hyper {
+
 class BoneMesh : public Mesh {
  public:
   BoneMesh(std::shared_ptr<VertexArrayObject> vao_in,
@@ -29,3 +31,5 @@ class BoneMesh : public Mesh {
   std::vector<glm::mat4> inv_bind_pose_vec_;
   std::vector<glm::mat4> abs_xform_vec_;
 };
+
+}  // namespace hyper

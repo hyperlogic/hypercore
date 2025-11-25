@@ -14,6 +14,7 @@
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
+namespace hyper {
 
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
 const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
@@ -43,3 +44,5 @@ void Mesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   prog_->SetUniform("colorTex", 0);
   vao_->DrawElements(GL_TRIANGLES);
 }
+
+}  // namespace hyper

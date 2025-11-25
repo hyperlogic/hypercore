@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+namespace hyper {
+
 class FlyCam {
  public:
   FlyCam(const glm::vec3& world_up_in, const glm::vec3& pos_in,
@@ -29,3 +31,5 @@ class FlyCam {
   glm::quat rot_;
   glm::mat4 camera_mat_;
 };
+
+}  // namespace hyper

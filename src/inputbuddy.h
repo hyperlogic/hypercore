@@ -18,6 +18,8 @@ struct SDL_JoyAxisEvent;
 struct SDL_JoyHatEvent;
 struct SDL_JoyButtonEvent;
 
+namespace hyper {
+
 class InputBuddy {
  public:
   using Keycode = int32_t;
@@ -81,3 +83,5 @@ class InputBuddy {
   MouseMotionCallback mouse_motion_callback_;
   Joypad joypad_;
 };
+
+}  // namespace hyper

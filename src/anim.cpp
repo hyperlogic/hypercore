@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace hyper {
+
 Anim::Anim(const std::string& name, size_t num_frames,
            size_t num_joints, float fps)
     : name_(name),
@@ -24,3 +26,5 @@ void Anim::SetKey(size_t frame, size_t joint, const glm::mat4& value) {
 const glm::mat4& Anim::GetKey(size_t frame, size_t joint) const {
   return frame_vec_[frame * num_joints_ + joint];
 }
+
+}  // namespace hyper

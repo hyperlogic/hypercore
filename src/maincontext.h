@@ -29,6 +29,8 @@
 
 #endif
 
+namespace hyper {
+
 #if defined(__ANDROID__)
 struct MainContext {
   EGLDisplay display;
@@ -49,3 +51,5 @@ struct MainContext {
 struct MainContext {
 };
 #endif
+
+}  // namesapce hyper

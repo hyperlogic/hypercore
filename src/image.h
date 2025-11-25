@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+namespace hyper {
+
 enum class PixelFormat {
   R = 0,  // intensity
   RA,     // intensity alpha
@@ -28,3 +30,5 @@ struct Image {
   bool is_srgb;
   std::vector<uint8_t> data;
 };
+
+}  // namespace hyper

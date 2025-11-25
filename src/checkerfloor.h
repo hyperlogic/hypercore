@@ -11,6 +11,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+namespace hyper {
+
 struct Texture;
 class Program;
 class VertexArrayObject;
@@ -31,3 +33,5 @@ class CheckerFloor {
   std::shared_ptr<VertexArrayObject> floor_vao_;
   bool is_framebuffer_srgb_enabled_;
 };
+
+}  // namespace hyper

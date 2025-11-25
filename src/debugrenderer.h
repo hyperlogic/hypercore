@@ -10,6 +10,8 @@
 
 #include <glm/glm.hpp>
 
+namespace hyper {
+
 class Program;
 class BufferObject;
 class VertexArrayObject;
@@ -45,4 +47,4 @@ class DebugRenderer {
   uint64_t warn_frame_num_ = 0;
 };
 
-
+}  // namespace hyper

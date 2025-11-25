@@ -17,6 +17,11 @@
 #include "src/maincontext.h"
 #include "src/optionparser.h"
 
+
+union SDL_Event;
+
+namespace hyper {
+
 class CheckerFloor;
 class DebugRenderer;
 class FlyCam;
@@ -25,8 +30,6 @@ class InputBuddy;
 class Program;
 class TextRenderer;
 struct Texture;
-
-union SDL_Event;
 
 class AppBase {
  public:
@@ -129,3 +132,4 @@ class AppBase {
   glm::mat4 scene_mat_;
 };
 
+}  // namespace hyper

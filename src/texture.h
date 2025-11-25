@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+namespace hyper {
+
 struct Image;
 
 enum class FilterType {
@@ -43,3 +45,5 @@ struct Texture {
   uint32_t texture;
   bool has_alpha_channel;
 };
+
+}  // namespace hyper

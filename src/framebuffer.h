@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <memory>
 
+namespace hyper {
+
 struct Texture;
 
 struct FrameBuffer {
@@ -32,3 +34,5 @@ struct FrameBuffer {
   std::shared_ptr<Texture> depth_attachment_;
   std::shared_ptr<Texture> stencil_attachment_;
 };
+
+}  // namespace hyper

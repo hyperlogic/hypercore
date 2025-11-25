@@ -22,6 +22,8 @@
 #include "src/texture.h"
 #include "src/vertexbuffer.h"
 
+namespace hyper {
+
 const int kTabSize = 4;
 static TextRenderer::TextKey next_key = 1;
 
@@ -305,3 +307,5 @@ TextRenderer::TextKey TextRenderer::AddScreenTextImpl(
 
   return text_key;
 }
+
+}  // namespace hyper

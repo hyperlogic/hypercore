@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <functional>
 
+namespace hyper {
+
 class BinaryAttribute {
  public:
   enum class Type {
@@ -93,3 +95,5 @@ class BinaryAttribute {
   size_t size;
   size_t offset;
 };
+
+}  // namespace hyper

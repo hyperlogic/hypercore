@@ -9,6 +9,8 @@
 #include "src/log.h"
 #include "src/util.h"
 
+namespace hyper {
+
 FlyCam::FlyCam(const glm::vec3& world_up_in, const glm::vec3& pos_in,
                const glm::quat& rot_in, float speed_in, float rot_speed_in) :
     world_up_(world_up_in), pos_(pos_in), vel_(0.0f, 0.0f, 0.0f),
@@ -81,3 +83,5 @@ void FlyCam::SetCameraMat(const glm::mat4& camera_mat) {
   rot_ = glm::normalize(glm::quat(glm::mat3(camera_mat)));
   vel_ = glm::vec3(0.0f, 0.0f, 0.0f);
 }
+
+}  // namespace hyper

@@ -13,6 +13,8 @@
 #include <android/log.h>
 #endif
 
+namespace hyper {
+
 static Log::LogLevel level = Log::Verbose;
 static const size_t APP_NAME_SIZE = 1024;
 static char app_name[APP_NAME_SIZE] = "Core";
@@ -129,4 +131,4 @@ void Log::E(const char *fmt, ...) {
   }
 }
 
-
+}  // namespace hyper

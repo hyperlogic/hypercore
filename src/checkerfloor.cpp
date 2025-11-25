@@ -18,6 +18,8 @@
 const float kFloorRadius = 100.0f;
 const float kFloorTileCount = 50.0f;
 
+namespace hyper {
+
 CheckerFloor::CheckerFloor(const glm::mat4& floor_mat_in) :
     floor_mat_(floor_mat_in) {
 }
@@ -91,3 +93,5 @@ void CheckerFloor::Render(const glm::mat4& camera_mat,
   floor_prog_->SetUniform("colorTex", 0);
   floor_vao_->DrawElements(GL_TRIANGLES);
 }
+
+} // namespace hyper

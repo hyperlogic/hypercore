@@ -13,6 +13,8 @@
 #include "src/debugrenderer.h"
 #include "src/log.h"
 
+namespace hyper {
+
 static void PrintNode(const Node* node, size_t indent_level, int32_t& count) {
   std::string indent = std::string(indent_level * 4, ' ');
   Log::D("%s%s [%d]\n", indent.c_str(), node->name().c_str(), count);
@@ -104,3 +106,5 @@ void Node::Print() const {
   int32_t count = 0;
   PrintNode(this, 0, count);
 }
+
+}  // namespace hyper

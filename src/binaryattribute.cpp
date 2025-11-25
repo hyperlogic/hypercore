@@ -5,6 +5,8 @@
 
 #include "src/binaryattribute.h"
 
+namespace hyper {
+
 static uint32_t property_type_size_arr[
     static_cast<size_t>(BinaryAttribute::Type::NumTypes)] = {
     0,                  // Unknown
@@ -23,3 +25,5 @@ BinaryAttribute::BinaryAttribute(Type type_in, size_t offset_in)
       size(property_type_size_arr[static_cast<uint32_t>(type_in)]),
       offset(offset_in) {
 }
+
+}  // namespace hyper

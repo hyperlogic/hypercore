@@ -13,6 +13,8 @@
 
 #include <glm/glm.hpp>
 
+namespace hyper {
+
 class Program;
 struct Texture;
 class VertexArrayObject;
@@ -81,3 +83,5 @@ class TextRenderer {
   std::unordered_map<uint32_t, Text> text_map_;
   Glyph space_glyph_;
 };
+
+}  // namespace hyper

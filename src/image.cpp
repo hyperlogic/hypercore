@@ -14,6 +14,8 @@
 #include "src/log.h"
 #include "src/util.h"
 
+namespace hyper {
+
 Image::Image() : width(0), height(0),
                  pixel_format(PixelFormat::R), is_srgb(false) {
 }
@@ -164,3 +166,5 @@ void Image::ConvertToRGBA() {
     pixel_format = PixelFormat::RGBA;
   }
 }
+
+}  // namespace hyper

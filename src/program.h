@@ -14,6 +14,8 @@
 
 #include "src/log.h"
 
+namespace hyper {
+
 class Program {
  public:
   Program();
@@ -94,3 +96,5 @@ class Program {
   std::vector<std::pair<std::string, std::string>> macros_;
   std::string debug_name_;
 };
+
+}  // namespace hyper

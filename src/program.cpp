@@ -21,6 +21,8 @@
 #define WARNINGS_AS_ERRORS
 #endif
 
+namespace hyper {
+
 static std::string ExpandMacros(
     std::vector<std::pair<std::string, std::string>> macros,
     const std::string& source) {
@@ -459,3 +461,5 @@ bool Program::CheckLinkStatus() {
 
   return true;
 }
+
+}  // namespace hyper

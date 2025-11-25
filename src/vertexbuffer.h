@@ -12,13 +12,15 @@
 
 #include <glm/glm.hpp>
 
-class VertexArrayObject;
-
 #ifndef __GL_H__
 // AJT: ANDROID: TODO: HACK TO WORK AROUND glBufferStorage
 #define GL_DYNAMIC_STORAGE_BIT            0x0100
 #define GL_MAP_READ_BIT                   0x0001
 #endif
+
+namespace hyper {
+
+class VertexArrayObject;
 
 class BufferObject {
   friend class VertexArrayObject;
@@ -88,3 +90,5 @@ class VertexArrayObject {
   std::vector<std::shared_ptr<BufferObject>> attrib_buffer_vec_;
   std::shared_ptr<BufferObject> element_buffer_;
 };
+
+}  // namespace hyper

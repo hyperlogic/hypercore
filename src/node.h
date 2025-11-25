@@ -11,6 +11,8 @@
 
 #include <glm/glm.hpp>
 
+namespace hyper {
+
 class DebugRenderer;
 
 class Node : public std::enable_shared_from_this<Node> {
@@ -56,3 +58,5 @@ class Node : public std::enable_shared_from_this<Node> {
   std::vector<std::shared_ptr<Node>> child_vec_;
   size_t idx_;
 };
+
+}  // namespace hyper

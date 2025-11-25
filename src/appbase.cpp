@@ -49,6 +49,8 @@
 #include "src/texture.h"
 #include "src/util.h"
 
+namespace hyper {
+
 enum optionIndex {
   UNKNOWN,
   FULLSCREEN,
@@ -702,3 +704,4 @@ void AppBase::RenderImGui() {
 #endif
 }
 
+}  // namespace hyper

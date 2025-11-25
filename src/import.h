@@ -12,6 +12,8 @@
 
 #include <glm/glm.hpp>
 
+namespace hyper {
+
 class Anim;
 class Mesh;
 class Node;
@@ -42,3 +44,5 @@ struct Asset {
 
 std::shared_ptr<Asset> AssetImport(const std::string& filename);
 std::shared_ptr<Asset> AssetImportAbs(const std::string& filename);
+
+}  // namespace hyper

@@ -9,6 +9,8 @@
 
 #include <glm/glm.hpp>
 
+namespace hyper {
+
 class Anim {
  public:
   Anim(const std::string& name_in, size_t num_frames_in,
@@ -31,3 +33,5 @@ class Anim {
   size_t num_joints_;
   float fps_;
 };
+
+}  // namespace hyper

@@ -45,6 +45,8 @@
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
+namespace hyper {
+
 void ToGlmMat4(const aiMatrix4x4& from, glm::mat4& to) {
   to[0][0] = from.a1;
   to[1][0] = from.a2;
@@ -608,3 +610,5 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
   return asset;
 }
+
+}  // namespace hyper

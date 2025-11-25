@@ -45,30 +45,31 @@ int SDLCALL Watch(void *userdata, SDL_Event* event) {
 }
 
 int main(int argc, char *argv[]) {
-  Log::SetAppName("hypercore");
-  MainContext main_context;
+  hyper::Log::SetAppName("hypercore");
+  hyper::MainContext main_context;
 
   // Create the app using the factory function defined by the application
-  std::shared_ptr<AppBase> app = AppBase::Create(main_context);
+  std::shared_ptr<hyper::AppBase> app = hyper::AppBase::Create(main_context);
   if (!app) {
-    Log::E("AppBase::Create() returned null!\n");
+    hyper::Log::E("AppBase::Create() returned null!\n");
     return 1;
   }
 
-  AppBase::ParseResult parse_result = app->ParseArguments(argc,
-                                                          (const char**)argv);
+  hyper::AppBase::ParseResult parse_result = app->ParseArguments(
+      argc, (const char**)argv);
+
   switch (parse_result) {
-    case AppBase::SUCCESS_RESULT:
+    case hyper::AppBase::SUCCESS_RESULT:
       break;
-    case AppBase::ERROR_RESULT:
-      Log::E("AppBase::ParseArguments failed!\n");
+    case hyper::AppBase::ERROR_RESULT:
+      hyper::Log::E("AppBase::ParseArguments failed!\n");
       return 1;
-    case AppBase::QUIT_RESULT:
+    case hyper::AppBase::QUIT_RESULT:
       return 0;
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK) != 0) {
-    Log::E("Failed to initialize SDL: %s\n", SDL_GetError());
+    hyper::Log::E("Failed to initialize SDL: %s\n", SDL_GetError());
     return 1;
   }
 
@@ -104,26 +105,26 @@ int main(int argc, char *argv[]) {
                                 window_flags);
 
   if (!ctx.window) {
-    Log::E("Failed to create window: %s\n", SDL_GetError());
+    hyper::Log::E("Failed to create window: %s\n", SDL_GetError());
     return 1;
   }
 
   ctx.gl_context = SDL_GL_CreateContext(ctx.window);
   if (!ctx.gl_context) {
-    Log::E("Failed to gl context: %s\n", SDL_GetError());
+    hyper::Log::E("Failed to gl context: %s\n", SDL_GetError());
     return 1;
   }
 
   SDL_GL_MakeCurrent(ctx.window, ctx.gl_context);
 
-  Log::I("GL_RENDERER = %s\n", glGetString(GL_RENDERER));
-  Log::I("GL_VERSION = %s\n", glGetString(GL_VERSION));
-  Log::I("GL_SHADING_LANGUAGE_VERSION = %s\n",
+  hyper::Log::I("GL_RENDERER = %s\n", glGetString(GL_RENDERER));
+  hyper::Log::I("GL_VERSION = %s\n", glGetString(GL_VERSION));
+  hyper::Log::I("GL_SHADING_LANGUAGE_VERSION = %s\n",
          glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   GL_ERROR_CHECK("here");
   if (!glGetString(GL_VERSION)) {
-    Log::E("gl get string failed: %s\n", SDL_GetError());
+    hyper::Log::E("gl get string failed: %s\n", SDL_GetError());
   }
 
 #ifdef __linux__
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
 
   GLenum err = glewInit();
   if (GLEW_OK != err) {
-    Log::E("Error: %s\n", glewGetErrorString(err));
+    hyper::Log::E("Error: %s\n", glewGetErrorString(err));
     return 1;
   }
 
@@ -152,7 +153,7 @@ int main(int argc, char *argv[]) {
   SDL_AddEventWatch(Watch, NULL);
 
   if (!app->Init()) {
-    Log::E("AppBase::Init failed\n");
+    hyper::Log::E("AppBase::Init failed\n");
     return 1;
   }
 
@@ -189,7 +190,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!app->Process(dt)) {
-      Log::E("AppBase::Process failed!\n");
+      hyper::Log::E("AppBase::Process failed!\n");
       return 1;
     }
 
@@ -198,7 +199,7 @@ int main(int argc, char *argv[]) {
     int width, height;
     SDL_GetWindowSize(ctx.window, &width, &height);
     if (!app->Render(dt, glm::ivec2(width, height))) {
-      Log::E("AppBase::Render failed!\n");
+      hyper::Log::E("AppBase::Render failed!\n");
       return 1;
     }
 

@@ -8,6 +8,8 @@
 #include "src/glincludes.h"
 #include "src/texture.h"
 
+namespace hyper {
+
 FrameBuffer::FrameBuffer() {
   glGenFramebuffers(1, &fbo);
 }
@@ -45,3 +47,5 @@ void FrameBuffer::AttachStencil(std::shared_ptr<Texture> stencil_tex) {
 bool FrameBuffer::IsComplete() const {
   return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 }
+
+}  // namespace hyper

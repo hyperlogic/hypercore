@@ -18,6 +18,40 @@
 #include "src/glincludes.h"
 #include "src/log.h"
 
+#ifndef NDEBUG
+// If there is a glError this outputs it along with a message to stderr.
+// otherwise there is no output.
+void GLErrorCheck(const char* message) {
+  GLenum val = glGetError();
+  switch (val) {
+    case GL_INVALID_ENUM:
+      hyper::Log::D("GL_INVALID_ENUM : %s\n", message);
+      break;
+    case GL_INVALID_VALUE:
+      hyper::Log::D("GL_INVALID_VALUE : %s\n", message);
+      break;
+    case GL_INVALID_OPERATION:
+      hyper::Log::D("GL_INVALID_OPERATION : %s\n", message);
+      break;
+#ifndef GL_ES_VERSION_2_0
+    case GL_STACK_OVERFLOW:
+      hyper::Log::D("GL_STACK_OVERFLOW : %s\n", message);
+      break;
+    case GL_STACK_UNDERFLOW:
+      hyper::Log::D("GL_STACK_UNDERFLOW : %s\n", message);
+      break;
+#endif
+    case GL_OUT_OF_MEMORY:
+      hyper::Log::D("GL_OUT_OF_MEMORY : %s\n", message);
+      break;
+    case GL_NO_ERROR:
+      break;
+  }
+}
+#endif
+
+namespace hyper {
+
 bool LoadFile(const std::string& filename, std::string& data) {
   std::ifstream ifs(GetRootPath() + filename, std::ifstream::in);
   if (ifs.good()) {
@@ -66,38 +100,6 @@ int NextCodePointUTF8(const char *str, uint32_t *code_point_out) {
     return 1;
   }
 }
-
-#ifndef NDEBUG
-// If there is a glError this outputs it along with a message to stderr.
-// otherwise there is no output.
-void GLErrorCheck(const char* message) {
-  GLenum val = glGetError();
-  switch (val) {
-    case GL_INVALID_ENUM:
-      Log::D("GL_INVALID_ENUM : %s\n", message);
-      break;
-    case GL_INVALID_VALUE:
-      Log::D("GL_INVALID_VALUE : %s\n", message);
-      break;
-    case GL_INVALID_OPERATION:
-      Log::D("GL_INVALID_OPERATION : %s\n", message);
-      break;
-#ifndef GL_ES_VERSION_2_0
-    case GL_STACK_OVERFLOW:
-      Log::D("GL_STACK_OVERFLOW : %s\n", message);
-      break;
-    case GL_STACK_UNDERFLOW:
-      Log::D("GL_STACK_UNDERFLOW : %s\n", message);
-      break;
-#endif
-    case GL_OUT_OF_MEMORY:
-      Log::D("GL_OUT_OF_MEMORY : %s\n", message);
-      break;
-    case GL_NO_ERROR:
-      break;
-  }
-}
-#endif
 
 glm::vec3 SafeNormalize(const glm::vec3& v, const glm::vec3& if_zero) {
   float len = glm::length(v);
@@ -449,3 +451,5 @@ glm::vec2 ToPlane(const glm::vec3& vec3) {
 glm::vec3 FromPlane(const glm::vec2& vec2) {
   return glm::vec3(vec2.x, 0.0f, vec2.y);
 }
+
+}  // namespace hyper

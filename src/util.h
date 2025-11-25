@@ -12,19 +12,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-// returns true on success, false on failure
-bool LoadFile(const std::string& filename, std::string& result);
-bool SaveFile(const std::string& filename, const std::string& data);
-
-// Iterate over codepoints in a utf-8 encoded string
-int NextCodePointUTF8(const char *str, uint32_t *code_point_out);
-
 #ifndef NDEBUG
 #define GL_ERROR_CHECK(x) GLErrorCheck(x)
 void GLErrorCheck(const char* message);
 #else
 #define GL_ERROR_CHECK(x)
 #endif
+
+namespace hyper {
+
+// returns true on success, false on failure
+bool LoadFile(const std::string& filename, std::string& result);
+bool SaveFile(const std::string& filename, const std::string& data);
+
+// Iterate over codepoints in a utf-8 encoded string
+int NextCodePointUTF8(const char *str, uint32_t *code_point_out);
 
 glm::vec3 SafeNormalize(const glm::vec3& v, const glm::vec3& if_zero);
 glm::quat SafeMix(const glm::quat& a, const glm::quat& b, float alpha);
@@ -90,3 +92,5 @@ void StrCpy_s(char* dest, size_t destsz, const char* src);
 
 glm::vec2 ToPlane(const glm::vec3& vec3);
 glm::vec3 FromPlane(const glm::vec2& vec2);
+
+}  // namespace hyper

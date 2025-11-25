@@ -14,6 +14,8 @@
 #include "src/program.h"
 #include "src/vertexbuffer.h"
 
+namespace hyper {
+
 const size_t kMaxVertexCount = 32768;
 
 DebugRenderer::DebugRenderer() {
@@ -143,3 +145,5 @@ void DebugRenderer::EndFrame() {
   line_position_vec_.clear();
   line_color_vec_.clear();
 }
+
+}  // namespace hyper

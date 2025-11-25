@@ -9,6 +9,8 @@
 
 #include "src/image.h"
 
+namespace hyper {
+
 static GLenum filter_type_to_gl[] = {
   GL_NEAREST,
   GL_LINEAR,
@@ -101,3 +103,5 @@ void Texture::Bind(int unit) const {
   glActiveTexture(GL_TEXTURE0 + unit);
   glBindTexture(GL_TEXTURE_2D, texture);
 }
+
+}  // namespace hyper

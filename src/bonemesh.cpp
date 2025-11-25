@@ -16,6 +16,8 @@
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
+namespace hyper {
+
 #define MAX_BONES 200  // same as in bone_mesh_vert.glsl
 
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
@@ -63,4 +65,4 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   vao_->DrawElements(GL_TRIANGLES);
 }
 
-
+}  // namespace hyper

@@ -9,6 +9,8 @@
 
 #include "src/log.h"
 
+namespace hyper {
+
 InputBuddy::InputBuddy() {
   int num_joysticks = SDL_NumJoysticks();
   if (num_joysticks > 0) {
@@ -202,3 +204,5 @@ void InputBuddy::UpdateJoypadButton(const SDL_JoyButtonEvent& event) {
       break;
   }
 }
+
+}  // namespace hyper

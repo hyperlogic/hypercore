@@ -13,6 +13,8 @@
 
 #include "src/node.h"
 
+namespace hyper {
+
 class Hierarchy;
 class Program;
 struct Texture;
@@ -44,3 +46,5 @@ class Mesh {
   std::shared_ptr<Texture> tex_;
   std::shared_ptr<Node> node_;
 };
+
+}  // namespace hyper

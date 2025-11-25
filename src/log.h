@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <string>
 
+namespace hyper {
+
 struct Log {
   enum LogLevel {
     Verbose = 0,
@@ -38,3 +40,5 @@ struct Log {
  private:
   static int printf(const char *fmt, ...);
 };
+
+}  // namespace hyper

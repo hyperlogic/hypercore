@@ -13,6 +13,8 @@
 
 #include "core/log.h"
 
+namespace hyper {
+
 template <typename State>
 class StateMachine {
  public:
@@ -87,3 +89,5 @@ class StateMachine {
   std::map<State, std::string> state_name_map_;
   bool debug_;
 };
+
+}  // namespace hyper

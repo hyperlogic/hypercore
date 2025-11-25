@@ -15,6 +15,8 @@
 #include "src/log.h"
 #include "src/util.h"
 
+namespace hyper {
+
 #if defined(__GL_H__) && !defined(__APPLE__)
 #define glBufferStorageShim glBufferStorage
 #else
@@ -215,3 +217,5 @@ void VertexArrayObject::DrawElements(int mode) const {
                  GL_UNSIGNED_INT, nullptr);
   Unbind();
 }
+
+}  // namespace hyper

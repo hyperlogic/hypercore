@@ -64,6 +64,12 @@ void PrintVec(const glm::vec3& v3, const std::string& name);
 void PrintVec(const glm::vec2& v2, const std::string& name);
 void PrintQuat(const glm::quat& q, const std::string& name);
 
+bool FuzzyEquals(float lhs, float rhs, float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec2& lhs, const glm::vec2& rhs, float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs, float epsilon = 0.001f);
+bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon = 0.001f);
+
 std::string GetRootPath();
 void SetRootPath(const std::string& root_path_in);
 

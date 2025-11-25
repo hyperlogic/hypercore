@@ -289,6 +289,37 @@ void PrintQuat(const glm::quat& q, const std::string& name) {
          q.w);
 }
 
+bool FuzzyEquals(float lhs, float rhs, float epsilon) {
+  return std::abs(lhs - rhs) < epsilon;
+}
+
+bool FuzzyEquals(const glm::vec2& lhs, const glm::vec2& rhs, float epsilon) {
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon);
+}
+
+bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon) {
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+      FuzzyEquals(lhs.z, rhs.z, epsilon);
+}
+
+bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs, float epsilon) {
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+      FuzzyEquals(lhs.z, rhs.z, epsilon) && FuzzyEquals(lhs.w, rhs.w, epsilon);
+}
+
+bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon) {
+  // Check if quaternions are close (considering both q and -q represent the same rotation)
+  float dot = glm::dot(lhs, rhs);
+  if (dot < 0.0f) {
+    // If dot product is negative, compare with negated quaternion
+    return FuzzyEquals(lhs.x, -rhs.x, epsilon) && FuzzyEquals(lhs.y, -rhs.y, epsilon) &&
+        FuzzyEquals(lhs.z, -rhs.z, epsilon) && FuzzyEquals(lhs.w, -rhs.w, epsilon);
+  } else {
+    return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+        FuzzyEquals(lhs.z, rhs.z, epsilon) && FuzzyEquals(lhs.w, rhs.w, epsilon);
+  }
+}
+
 static const size_t ROOT_PATH_SIZE = 1024;
 #ifdef SHIPPING
 static char root_path[ROOT_PATH_SIZE] = "";

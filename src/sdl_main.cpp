@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
   SDL_VERSION(&info.version)
   auto ret = SDL_GetWindowWMInfo(ctx.window, &info);
   if (ret != SDL_TRUE) {
-    Log::W("Failed to retrieve SDL window info: %s\n", SDL_GetError());
+    hyper::Log::W("Failed to retrieve SDL window info: %s\n", SDL_GetError());
   } else {
     main_context.xdisplay = info.info.x11.display;
     main_context.glxDrawable = (GLXWindow)info.info.x11.window;

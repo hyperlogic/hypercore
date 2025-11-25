@@ -47,14 +47,19 @@ bool DebugRenderer::Init() {
   return true;
 }
 
-void DebugRenderer::Line(const glm::vec3& start, const glm::vec3& end,
+void DebugRenderer::Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
                          const glm::vec3& color) {
+  Line(start_pos, end_pos, color, color);
+}
+
+void DebugRenderer::Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
+                         const glm::vec3& start_color, const glm::vec3& end_color) {
   // AJT(TODO): dynamically resize buffers
   if (line_position_vec_.size() + 2 <= kMaxVertexCount) {
-    line_position_vec_.push_back(start);
-    line_position_vec_.push_back(end);
-    line_color_vec_.push_back(color);
-    line_color_vec_.push_back(color);
+    line_position_vec_.push_back(start_pos);
+    line_position_vec_.push_back(end_pos);
+    line_color_vec_.push_back(start_color);
+    line_color_vec_.push_back(end_color);
   } else if (frame_num_ != warn_frame_num_) {
     Log::W("DebugRenderer overflow!\n");
     warn_frame_num_ = frame_num_;
@@ -127,6 +132,10 @@ void DebugRenderer::Render(const glm::mat4& camera_mat,
                            const glm::vec2& near_far) {
   frame_num_++;
 
+#ifdef __linux__
+  glLineWidth(2.0f);  // Set line width
+#endif
+
   dd_prog_->Bind();
   glm::mat4 model_view_proj_mat = proj_mat * glm::inverse(camera_mat);
   dd_prog_->SetUniform("modelViewProjMat", model_view_proj_mat);
@@ -135,10 +144,13 @@ void DebugRenderer::Render(const glm::mat4& camera_mat,
 
   line_position_buffer_->Update(line_position_vec_);
   line_color_buffer_->Update(line_color_vec_);
-
   glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(line_position_vec_.size()));
 
   vao_->Unbind();
+
+#ifdef __linux__
+  glLineWidth(1.0f);
+#endif
 }
 
 void DebugRenderer::EndFrame() {

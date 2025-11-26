@@ -97,7 +97,7 @@ FetchContent_Declare(
    assimp
    GIT_REPOSITORY https://github.com/assimp/assimp.git
    GIT_TAG v6.0.2  # Use a specific version tag for reproducibility
-   PATCH_COMMAND patch -p1 --forward --reject-file=- < ${CMAKE_CURRENT_SOURCE_DIR}/../assimp-macos.patch || true
+   PATCH_COMMAND patch -p1 --forward --reject-file=- < ${CMAKE_CURRENT_SOURCE_DIR}/assimp-macos.patch || true
 )
 FetchContent_MakeAvailable(assimp)
 

@@ -21,7 +21,7 @@ Image::Image() : width(0), height(0),
 }
 
 bool Image::Load(const std::string& filename) {
-  std::string full_filename = GetRootPath() + filename;
+  std::string full_filename = FindFile(filename);
   const char* filename_cstr = full_filename.c_str();
 
   int w, h, channels;

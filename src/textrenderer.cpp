@@ -31,7 +31,7 @@ TextRenderer::TextRenderer() {}
 
 bool TextRenderer::Init(const std::string& font_json_filename,
                         const std::string& font_png_filename) {
-  std::ifstream f(GetRootPath() + font_json_filename);
+  std::ifstream f(FindFile(font_json_filename));
   if (f.fail()) {
     return false;
   }

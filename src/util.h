@@ -70,8 +70,8 @@ bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon = 0.0
 bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs, float epsilon = 0.001f);
 bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon = 0.001f);
 
-std::string GetRootPath();
-void SetRootPath(const std::string& root_path_in);
+void AppendSearchPath(const std::string& path);
+std::string FindFile(const std::string& filename);
 
 bool PointInsideAABB(const glm::vec3& point, const glm::vec3& aabb_min,
                      const glm::vec3& aabb_max);

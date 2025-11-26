@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -53,7 +54,7 @@ void GLErrorCheck(const char* message) {
 namespace hyper {
 
 bool LoadFile(const std::string& filename, std::string& data) {
-  std::ifstream ifs(GetRootPath() + filename, std::ifstream::in);
+  std::ifstream ifs(FindFile(filename), std::ifstream::in);
   if (ifs.good()) {
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
@@ -65,7 +66,7 @@ bool LoadFile(const std::string& filename, std::string& data) {
 }
 
 bool SaveFile(const std::string& filename, const std::string& data) {
-  std::ofstream ofs(GetRootPath() + filename, std::ofstream::out);
+  std::ofstream ofs(FindFile(filename), std::ofstream::out);
   if (ofs.good()) {
     ofs << data;
     return true;
@@ -320,25 +321,47 @@ bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon) {
   }
 }
 
-static const size_t ROOT_PATH_SIZE = 1024;
+static std::vector<std::string> search_paths = [] {
+  std::vector<std::string> paths;
 #ifdef SHIPPING
-static char root_path[ROOT_PATH_SIZE] = "";
+  paths.push_back("");
 #else
 #if defined(__linux__) || defined(__APPLE__)
-// enables us to run from the build dir
-static char root_path[ROOT_PATH_SIZE] = "../";
+  // enables us to run from the build dir
+  paths.push_back("../");
+  paths.push_back("../hypercore/");
 #else
-// enables us to run from the build/Debug dir
-static char root_path[ROOT_PATH_SIZE] = "../../";
+  // enables us to run from the build/Debug dir
+  paths.push_back("../../");
+  paths.push_back("../../hypercore/");
 #endif
 #endif
+  return paths;
+}();
 
-std::string GetRootPath() {
-  return std::string(root_path);
+void AppendSearchPath(const std::string& path) {
+  search_paths.push_back(path);
 }
 
-void SetRootPath(const std::string& root_path_in) {
-  snprintf(root_path, ROOT_PATH_SIZE, "%s", root_path_in.c_str());
+std::string FindFile(const std::string& filename) {
+  // If filename is absolute or starts with ./ or ../, use it directly
+  if (!filename.empty() && (filename[0] == '/' || filename[0] == '\\' ||
+      (filename.size() >= 2 && filename[0] == '.' && (filename[1] == '/' || filename[1] == '\\')) ||
+      (filename.size() >= 3 && filename[0] == '.' && filename[1] == '.' && (filename[2] == '/' || filename[2] == '\\')))) {
+    return filename;
+  }
+
+  // Search through all paths
+  for (const auto& search_path : search_paths) {
+    std::string full_path = search_path + filename;
+    std::ifstream test(full_path);
+    if (test.good()) {
+      return full_path;
+    }
+  }
+
+  // If not found, return filename as-is (will fail when opened)
+  return filename;
 }
 
 bool PointInsideAABB(const glm::vec3& point, const glm::vec3& aabb_min,

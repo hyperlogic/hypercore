@@ -524,7 +524,7 @@ std::shared_ptr<Anim> BuildAnim(std::shared_ptr<const Asset> asset,
 }
 
 std::shared_ptr<Asset> AssetImport(const std::string& filename) {
-  return AssetImportAbs(GetRootPath() + filename);
+  return AssetImportAbs(FindFile(filename));
 }
 
 std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {

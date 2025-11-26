@@ -205,7 +205,7 @@ struct AppContext {
     external_data_path = std::string(app->activity->externalDataPath) + "/";
 
     // from util.h
-    SetRootPath(external_data_path);
+    AppendSearchPath(external_data_path);
 
     Log::D("AJT: external_data_path = \"%s\"\n",
            external_data_path.c_str());

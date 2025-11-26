@@ -276,7 +276,7 @@ bool AppBase::Init() {
 
   floor_ = std::make_shared<CheckerFloor>(
       MakeMat4(1.0f, glm::identity<glm::quat>(),
-               glm::vec3(0.0f, -0.01f, 0.0f)));
+               glm::vec3(0.0f, 0.0f, 0.0f)));
   if (!floor_->Init(is_framebuffer_srgb_enabled)) {
     Log::E("Error: CheckerFloor::Init failed!\n");
     return false;
@@ -568,8 +568,9 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
         FOVY, static_cast<float>(width) / static_cast<float>(height),
         Z_NEAR, Z_FAR);
 
+    // draw the origin axes.
     glm::mat4 origin_mat(1.0f);
-    debug_renderer_->Transform(origin_mat, 10.0f);
+    debug_renderer_->Transform(origin_mat, scene_cm_units_ ? 100.0f : 1.0f);
 
     // keep the floor aligned to world up, and world units.
     floor_->Render(scene_mat_ * camera_mat, proj_mat, viewport, near_far);

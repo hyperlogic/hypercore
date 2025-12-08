@@ -555,6 +555,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   // PrintNode(scene->mRootNode, "");
   asset->root_node = BuildNodeTree(scene->mRootNode, asset->string_to_node_map,
                                    asset->node_vec);
+  asset->root_node->Update();  // update all the abs xforms in the tree.
   Log::D("num nodes = %zu\n", asset->string_to_node_map.size());
   Log::D("num meshes = %d\n", scene->mNumMeshes);
   Log::D("num skeletons = %d\n", scene->mNumSkeletons);

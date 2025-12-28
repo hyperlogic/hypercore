@@ -14,8 +14,8 @@ find_package(OpenGL REQUIRED)
 
 # sdl2
 # Configure SDL2 build options (optional, set before FetchContent_Declare)
-set(SDL_SHARED ON CACHE BOOL "" FORCE)
-set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDL_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 
@@ -35,7 +35,8 @@ set(GLEW_INSTALL OFF CACHE BOOL "" FORCE)
 set(GLEW_REGAL OFF CACHE BOOL "" FORCE)
 set(GLEW_OSMESA OFF CACHE BOOL "" FORCE)
 set(GLEW_EGL OFF CACHE BOOL "" FORCE)
-set(GLEW_STATIC ON CACHE BOOL "" FORCE)  # Force static build
+set(glew-cmake_BUILD_SHARED OFF CACHE BOOL "" FORCE)  # Don't build shared lib
+set(glew-cmake_BUILD_STATIC ON CACHE BOOL "" FORCE)   # Build static lib
 
 # Use pre-built release archive
 FetchContent_Declare(
@@ -155,7 +156,7 @@ target_link_libraries(hypercore PUBLIC
     ${OPENGL_LIBRARIES}
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-    glew
+    glew_s
     glm
     nlohmann_json::nlohmann_json
     assimp

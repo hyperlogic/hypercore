@@ -375,10 +375,66 @@ std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
   return boneMesh;
 }
 
+// Detect the native sample rate of an animation by analyzing keyframe times.
+// Returns a rate clamped to [min_rate, max_rate].
+static double DetectAnimationSampleRate(const std::string& filename, const aiAnimation* anim,
+                                        double min_rate, double max_rate) {
+
+  if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".bvh") {
+    // BVH files only support constant frame rates,
+    // so ticks per second is frames per second!
+    double sample_rate = anim->mTicksPerSecond;
+    return std::clamp(min_rate, sample_rate, max_rate);
+  }
+
+  double ticks_per_sec = anim->mTicksPerSecond;
+
+  // Calculate minimum meaningful delta. Any delta smaller than this would
+  // imply a sample rate higher than max_rate, and is likely an interpolation
+  // artifact from Assimp's format conversion (especially Euler-to-quaternion).
+  // Apply 1% tolerance to handle floating point precision issues.
+  double min_meaningful_delta = ticks_per_sec / max_rate * 0.99;
+
+  // Find the smallest delta that represents a real frame boundary.
+  double min_delta = std::numeric_limits<double>::max();
+
+  for (uint32_t c = 0; c < anim->mNumChannels; c++) {
+    const aiNodeAnim* channel = anim->mChannels[c];
+
+    // Check position keys
+    for (uint32_t k = 1; k < channel->mNumPositionKeys; k++) {
+      double delta = channel->mPositionKeys[k].mTime -
+                     channel->mPositionKeys[k - 1].mTime;
+      if (delta > 0.0 && delta >= min_meaningful_delta) {
+        min_delta = std::min(min_delta, delta);
+      }
+    }
+
+    // Check rotation keys
+    double prev_delta = std::numeric_limits<double>::max();
+    for (uint32_t k = 1; k < channel->mNumRotationKeys; k++) {
+      double delta = channel->mRotationKeys[k].mTime -
+                     channel->mRotationKeys[k - 1].mTime;
+      if (delta > 0.0 && delta >= min_meaningful_delta) {
+        min_delta = std::min(min_delta, delta);
+      }
+    }
+  }
+
+  // If we found valid deltas, compute rate; otherwise use min_rate
+  if (min_delta < std::numeric_limits<double>::max()) {
+    double detected_rate = ticks_per_sec / min_delta;
+    // Snap to nearest integer to handle floating point precision issues
+    // in glTF and other formats.
+    detected_rate = std::round(detected_rate);
+    return std::clamp(detected_rate, min_rate, max_rate);
+  }
+
+  return min_rate;
+}
+
 std::shared_ptr<Anim> BuildAnim(std::shared_ptr<const Asset> asset,
                                 const aiAnimation* aiAnim, double sample_rate) {
-  // AJT: TODO: HACK: don't have time to do a full animation import
-  // just want the first frame for now.
   size_t num_nodes = aiAnim->mNumChannels;
   double anim_length = (aiAnim->mDuration / aiAnim->mTicksPerSecond);  // sec
   size_t num_frames;
@@ -585,17 +641,21 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
   asset->anim_vec.reserve(scene->mNumAnimations);
 
-  const double kSampleRate = 20.0f;  // frames per second
   for (uint32_t i = 0; i < scene->mNumAnimations; i++) {
     const aiAnimation* aiAnim = scene->mAnimations[i];
+
+    static const double kMinSampleRate = 10.0;
+    static const double kMaxSampleRate = 240.0;
+    double sample_rate = DetectAnimationSampleRate(filename, aiAnim, kMinSampleRate, kMaxSampleRate);
 
     Log::D("  anim[%d]\n", i);
     Log::D("    mName = %s\n", aiAnim->mName.C_Str());
     Log::D("    mDuration = %f\n", (float)aiAnim->mDuration);
     Log::D("    mTicksPerSecond = %f\n", (float)aiAnim->mTicksPerSecond);
     Log::D("    mNumChannels = %u\n", aiAnim->mNumChannels);
+    Log::D("    DetectAnimationSampleRate() = %.3f\n", sample_rate);
 
-    auto anim = BuildAnim(asset, aiAnim, kSampleRate);
+    auto anim = BuildAnim(asset, aiAnim, sample_rate);
     asset->anim_vec.push_back(anim);
   }
 

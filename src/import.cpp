@@ -424,9 +424,14 @@ static double DetectAnimationSampleRate(const std::string& filename, const aiAni
   // If we found valid deltas, compute rate; otherwise use min_rate
   if (min_delta < std::numeric_limits<double>::max()) {
     double detected_rate = ticks_per_sec / min_delta;
-    // Snap to nearest integer to handle floating point precision issues
-    // in glTF and other formats.
-    detected_rate = std::round(detected_rate);
+
+    if (filename.size() > 4 && (filename.substr(filename.size() - 4) == ".glb" ||
+                                filename.substr(filename.size() - 4) == ".gltf" ||
+                                filename.substr(filename.size() - 4) == ".vrm")) {
+      // Snap to nearest integer to handle floating point precision issues
+      // in glTF and other formats.
+      detected_rate = std::round(detected_rate);
+    }
     return std::clamp(detected_rate, min_rate, max_rate);
   }
 

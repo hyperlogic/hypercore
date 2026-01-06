@@ -47,6 +47,25 @@
 
 namespace hyper {
 
+// FBX TimeMode enum values (matches Assimp's FileGlobalSettings::FrameRate)
+enum FbxTimeMode {
+  kFbxTimeMode_Default = 0,
+  kFbxTimeMode_120 = 1,
+  kFbxTimeMode_100 = 2,
+  kFbxTimeMode_60 = 3,
+  kFbxTimeMode_50 = 4,
+  kFbxTimeMode_48 = 5,
+  kFbxTimeMode_30 = 6,
+  kFbxTimeMode_30_Drop = 7,
+  kFbxTimeMode_NtscDropFrame = 8,
+  kFbxTimeMode_NtscFullFrame = 9,
+  kFbxTimeMode_Pal = 10,
+  kFbxTimeMode_Cinema = 11,
+  kFbxTimeMode_1000 = 12,
+  kFbxTimeMode_CinemaNd = 13,
+  kFbxTimeMode_Custom = 14,
+};
+
 void ToGlmMat4(const aiMatrix4x4& from, glm::mat4& to) {
   to[0][0] = from.a1;
   to[1][0] = from.a2;
@@ -375,18 +394,70 @@ std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
   return boneMesh;
 }
 
+
+// Convert FBX TimeMode to frame rate (matches Assimp's FrameRateToDouble)
+static double TimeModeToFrameRate(int time_mode, double custom_fps) {
+  switch (time_mode) {
+    case kFbxTimeMode_120: return 120.0;
+    case kFbxTimeMode_100: return 100.0;
+    case kFbxTimeMode_60: return 60.0;
+    case kFbxTimeMode_50: return 50.0;
+    case kFbxTimeMode_48: return 48.0;
+    case kFbxTimeMode_30:
+    case kFbxTimeMode_30_Drop: return 30.0;
+    case kFbxTimeMode_NtscDropFrame:
+    case kFbxTimeMode_NtscFullFrame: return 29.9700262;
+    case kFbxTimeMode_Pal: return 25.0;
+    case kFbxTimeMode_Cinema: return 24.0;
+    case kFbxTimeMode_1000: return 1000.0;
+    case kFbxTimeMode_CinemaNd: return 23.976;
+    case kFbxTimeMode_Custom: return custom_fps;
+    default: return 0.0;
+  }
+}
+
+// Try to get the sample rate from scene metadata (FBX FrameRate/CustomFrameRate).
+// Returns the rate if found, or 0.0 if not available.
+static double GetSampleRateFromMetadata(const aiScene* scene) {
+  if (!scene || !scene->mMetaData) {
+    return 0.0;
+  }
+
+  // FBX files store FrameRate as TimeMode enum (int) and CustomFrameRate (float)
+  int frame_rate_mode = 0;
+  float custom_frame_rate = 0.0f;  // Assimp stores this as float, not double
+
+  scene->mMetaData->Get("FrameRate", frame_rate_mode);
+  scene->mMetaData->Get("CustomFrameRate", custom_frame_rate);
+
+  double fps = TimeModeToFrameRate(frame_rate_mode,
+                                   static_cast<double>(custom_frame_rate));
+  if (fps > 0.0) {
+    return fps;
+  }
+
+  return 0.0;
+}
+
 // Detect the native sample rate of an animation by analyzing keyframe times.
 // Returns a rate clamped to [min_rate, max_rate].
-static double DetectAnimationSampleRate(const std::string& filename, const aiAnimation* anim,
-                                        double min_rate, double max_rate) {
+static double DetectAnimationSampleRate(const std::string& filename, const aiScene* scene,
+                                        const aiAnimation* anim, double min_rate, double max_rate) {
 
   if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".bvh") {
     // BVH files only support constant frame rates,
     // so ticks per second is frames per second!
     double sample_rate = anim->mTicksPerSecond;
     return std::clamp(min_rate, sample_rate, max_rate);
+  } else if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".fbx") {
+    // for fbx determine frame rate from metadata.
+    double sample_rate = GetSampleRateFromMetadata(scene);
+    if (sample_rate != 0.0) {
+      return sample_rate;
+    }
   }
 
+  // try to detect sample_rate by analyzing tracks.
   double ticks_per_sec = anim->mTicksPerSecond;
 
   // Calculate minimum meaningful delta. Any delta smaller than this would
@@ -411,7 +482,6 @@ static double DetectAnimationSampleRate(const std::string& filename, const aiAni
     }
 
     // Check rotation keys
-    double prev_delta = std::numeric_limits<double>::max();
     for (uint32_t k = 1; k < channel->mNumRotationKeys; k++) {
       double delta = channel->mRotationKeys[k].mTime -
                      channel->mRotationKeys[k - 1].mTime;
@@ -651,7 +721,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
     static const double kMinSampleRate = 10.0;
     static const double kMaxSampleRate = 240.0;
-    double sample_rate = DetectAnimationSampleRate(filename, aiAnim, kMinSampleRate, kMaxSampleRate);
+    double sample_rate = DetectAnimationSampleRate(filename, scene, aiAnim, kMinSampleRate, kMaxSampleRate);
 
     Log::D("  anim[%d]\n", i);
     Log::D("    mName = %s\n", aiAnim->mName.C_Str());

@@ -96,6 +96,7 @@ class AppBase {
   std::string app_title_;
   MainContext& main_context_;
   bool imgui_setup_;
+  std::string imgui_ini_path_;
   std::vector<option::Descriptor> usage_;
   Options opt_;
   std::shared_ptr<DebugRenderer> debug_renderer_;

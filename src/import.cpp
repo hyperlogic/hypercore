@@ -699,16 +699,19 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         mesh->HasNormals()) {
       auto mat = BuildMaterial(scene->mMaterials[mesh->mMaterialIndex]);
       auto buffers = ImportMeshBuffers(mesh);
-      aiNode* ai_node = mesh->mBones[0]->mNode;
-      auto node = asset->FindNode(ai_node->mName.C_Str());
-      if (!node) {
-        Log::E("could not find \"%s\" in map!\n", ai_node->mName.C_Str());
-      }
-      Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
-             ai_node->mName.C_Str());
       if (mesh->HasBones()) {
+        aiNode* ai_node = mesh->mBones[0]->mNode;
+        auto node = asset->FindNode(ai_node->mName.C_Str());
+        if (!node) {
+          Log::E("could not find \"%s\" in map!\n", ai_node->mName.C_Str());
+        }
+        Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), ai_node->mName.C_Str());
         asset->mesh_vec.push_back(BuildBoneMesh(mesh, node, buffers));
       } else {
+        auto node = asset->FindNode(mesh->mName.C_Str());
+        if (!node) {
+          Log::E("could not find \"%s\" in map!\n", mesh->mName.C_Str());
+        }
         asset->mesh_vec.push_back(BuildMesh(node, buffers));
       }
     }

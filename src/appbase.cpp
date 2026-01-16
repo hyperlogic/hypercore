@@ -623,6 +623,14 @@ void AppBase::InitImGui() {
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
+  // Save imgui.ini in the same directory as the executable
+  char* base_path = SDL_GetBasePath();
+  if (base_path) {
+    imgui_ini_path_ = std::string(base_path) + "imgui.ini";
+    SDL_free(base_path);
+    io.IniFilename = imgui_ini_path_.c_str();
+  }
+
 #ifdef __linux__
   // font is too small on linux
   io.FontGlobalScale = 2.0f;  // Scale everything by 2x

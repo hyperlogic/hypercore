@@ -7,6 +7,12 @@
 // 3d gaussian splat renderer
 
 #include <stdint.h>
+#include <string>
+
+#ifndef _WIN32
+#include <unistd.h>
+#include <limits.h>
+#endif
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
@@ -28,6 +34,10 @@
 #include "src/log.h"
 #include "src/util.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 struct GlobalContext {
   bool quitting = false;
   SDL_Window* window = NULL;
@@ -46,6 +56,36 @@ int SDLCALL Watch(void *userdata, SDL_Event* event) {
 
 int main(int argc, char *argv[]) {
   hyper::Log::SetAppName("hypercore");
+
+#ifdef SHIPPING
+  // Set search path to executable directory so resources can be found
+  // when launched via file association (where cwd is the file's directory)
+#ifdef _WIN32
+  char exe_path[MAX_PATH];
+  if (GetModuleFileNameA(NULL, exe_path, MAX_PATH) > 0) {
+    std::string path(exe_path);
+    size_t last_slash = path.find_last_of("\\/");
+    if (last_slash != std::string::npos) {
+      path = path.substr(0, last_slash + 1);
+      hyper::AppendSearchPath(path);
+    }
+  }
+#else
+  // On Linux/macOS, use /proc/self/exe or argv[0]
+  char exe_path[PATH_MAX];
+  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+  if (len != -1) {
+    exe_path[len] = '\0';
+    std::string path(exe_path);
+    size_t last_slash = path.find_last_of('/');
+    if (last_slash != std::string::npos) {
+      path = path.substr(0, last_slash + 1);
+      hyper::AppendSearchPath(path);
+    }
+  }
+#endif
+#endif
+
   hyper::MainContext main_context;
 
   // Create the app using the factory function defined by the application

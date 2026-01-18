@@ -77,7 +77,7 @@ class App : public AppBase {
   bool RenderImGuiImpl() override;
  protected:
   // your scene data here: Assets, Mesh etc.
-}
+};
 }
 ```
 

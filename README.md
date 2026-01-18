@@ -49,7 +49,7 @@ target_link_libraries(YOUR_PROJECT_NAME PRIVATE hypercore)
 
 Where app.h looks something like this:
 
-```
+```c++
 #pragma once
 
 #include "hypercore/src/appbase.h"
@@ -83,7 +83,7 @@ class App : public AppBase {
 
 And a app.cc that looks something like this:
 
-```
+```c++
 #include "src/app.h"
 #include <imgui.h>
 #include "hypercore/src/debugrenderer.h"

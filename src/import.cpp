@@ -172,10 +172,13 @@ static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material) {
 }
 
 static std::shared_ptr<Node> BuildNodeTree(
+    const aiScene* scene,
     const aiNode* ai_node,
     std::map<std::string, std::shared_ptr<Node>>& name_to_node_map,
+    std::map<std::string, std::shared_ptr<Node>>& mesh_name_to_node_map,
     std::vector<std::shared_ptr<Node>>& node_vec) {
   assert(ai_node);
+
   std::string name = ai_node->mName.C_Str();
   glm::mat4 xform;
   ToGlmMat4(ai_node->mTransformation, xform);
@@ -193,10 +196,18 @@ static std::shared_ptr<Node> BuildNodeTree(
   if (iter != name_to_node_map.end()) {
     Log::W("duplicate node name \"%s\" detected.\n", name.c_str());
   }
+
   name_to_node_map[name] = node;
+
+  for (uint32_t i = 0; i < ai_node->mNumMeshes; i++) {
+    const aiMesh* mesh = scene->mMeshes[ai_node->mMeshes[i]];
+    std::string mesh_name = mesh->mName.C_Str();
+    mesh_name_to_node_map[mesh_name] = node;
+  }
+
   for (uint32_t i = 0; i < ai_node->mNumChildren; i++) {
-    auto child = BuildNodeTree(ai_node->mChildren[i], name_to_node_map,
-                               node_vec);
+    auto child = BuildNodeTree(scene, ai_node->mChildren[i], name_to_node_map,
+                               mesh_name_to_node_map, node_vec);
     node->child_vec().push_back(child);
   }
   return node;
@@ -684,8 +695,10 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   }
 
   // PrintNode(scene->mRootNode, "");
-  asset->root_node = BuildNodeTree(scene->mRootNode, asset->string_to_node_map,
-                                   asset->node_vec);
+
+  std::map<std::string, std::shared_ptr<Node>> mesh_name_to_node_map;
+  asset->root_node = BuildNodeTree(scene, scene->mRootNode, asset->string_to_node_map,
+                                   mesh_name_to_node_map, asset->node_vec);
   asset->root_node->Update();  // update all the abs xforms in the tree.
   Log::D("num nodes = %zu\n", asset->string_to_node_map.size());
   Log::D("num meshes = %d\n", scene->mNumMeshes);
@@ -708,11 +721,11 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), ai_node->mName.C_Str());
         asset->mesh_vec.push_back(BuildBoneMesh(mesh, node, buffers));
       } else {
-        auto node = asset->FindNode(mesh->mName.C_Str());
-        if (!node) {
-          Log::E("could not find \"%s\" in map!\n", mesh->mName.C_Str());
+        auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
+        if (iter == mesh_name_to_node_map.end()) {
+          Log::E("could not find QQQ \"%s\" in map!\n", mesh->mName.C_Str());
         }
-        asset->mesh_vec.push_back(BuildMesh(node, buffers));
+        asset->mesh_vec.push_back(BuildMesh(iter->second, buffers));
       }
     }
   }

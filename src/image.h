@@ -20,10 +20,12 @@ enum class PixelFormat {
 
 struct Image {
   Image();
-  bool Load(const std::string& filename);
+  bool LoadBytes(const uint8_t* bytes, size_t num_bytes);
+  bool Load(const std::string& filename_in);
   void MultiplyAlpha();
   void ConvertToRGBA();
 
+  std::string filename;
   uint32_t width;
   uint32_t height;
   PixelFormat pixel_format;

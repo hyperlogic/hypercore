@@ -16,20 +16,17 @@
 
 namespace hyper {
 
-Image::Image() : width(0), height(0),
+Image::Image() : filename("?"), width(0), height(0),
                  pixel_format(PixelFormat::R), is_srgb(false) {
 }
 
-bool Image::Load(const std::string& filename) {
-  std::string full_filename = FindFile(filename);
-  const char* filename_cstr = full_filename.c_str();
-
-  int w, h, channels;
-
+bool Image::LoadBytes(const uint8_t* bytes, size_t num_bytes) {
   // Load the image using stb_image
-  unsigned char* image_data = stbi_load(filename_cstr, &w, &h, &channels, 0);
+  int w, h, channels;
+  unsigned char* image_data = stbi_load_from_memory(
+      bytes, static_cast<int>(num_bytes), &w, &h, &channels, 0);
   if (!image_data) {
-    Log::E("Failed to load texture \"%s\": %s\n", filename_cstr,
+    Log::E("Failed to load texture \"%s\": %s\n", filename.c_str(),
            stbi_failure_reason());
     return false;
   }
@@ -54,8 +51,8 @@ bool Image::Load(const std::string& filename) {
       pixel_size = 4;
       break;
     default:
-      Log::E("unsupported channel count %d for image \"%s\"\n", channels,
-             filename_cstr);
+      Log::E("Failed to load texture \"%s\": unsupported channel count %d\n",
+             filename.c_str(), channels);
       stbi_image_free(image_data);
       return false;
   }
@@ -82,6 +79,16 @@ bool Image::Load(const std::string& filename) {
   is_srgb = true;
 
   return true;
+}
+
+bool Image::Load(const std::string& filename_in) {
+  filename = FindFile(filename_in);
+  std::vector<uint8_t> data_vec;
+  if (!LoadBinaryFile(filename, data_vec)) {
+    Log::E("Failed to load texture \"%s\": LoadBinaryFile failed\n",
+           filename.c_str());
+  }
+  return LoadBytes(data_vec.data(), data_vec.size());
 }
 
 void Image::MultiplyAlpha() {

@@ -20,6 +20,7 @@
 #include <SDL2/SDL_syswm.h>
 
 #include <chrono>
+#include <memory>
 #include <thread>
 
 #include <glm/glm.hpp>
@@ -140,7 +141,8 @@ int main(int argc, char *argv[]) {
                       SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #endif
 
-  ctx.window = SDL_CreateWindow(app->app_title().c_str(), SDL_WINDOWPOS_UNDEFINED,
+  ctx.window = SDL_CreateWindow(app->app_title().c_str(),
+                                SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED, kWidth, kHeight,
                                 window_flags);
 

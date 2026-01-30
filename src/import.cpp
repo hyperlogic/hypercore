@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
+#include <limits>
 #include <map>
 #include <memory>
 #include <queue>
@@ -103,6 +104,37 @@ static void PrintNode(const aiNode* node, const std::string& indent) {
   for (uint32_t i = 0; i < node->mNumChildren; i++) {
     PrintNode(node->mChildren[i], newIndent);
   }
+}
+
+static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
+  assert(texture);
+  auto img = std::make_shared<Image>();
+  if (texture->mHeight == 0) {
+    assert(texture->pcData);
+    // this is a compressed texture, try loading it.
+    if (!img->LoadBytes(reinterpret_cast<uint8_t*>(texture->pcData),
+                       texture->mWidth)) {
+      Log::E("Failed to load compressed texture \"%s\" format = %s\n",
+             texture->mFilename.C_Str(), texture->achFormatHint);
+    }
+    Log::D("Success loading compressed texture \"%s\" format = %s, (%d, %d)\n",
+           texture->mFilename.C_Str(), texture->achFormatHint, img->width,
+           img->height);
+  } else {
+    img->filename = texture->mFilename.C_Str();
+    img->width = texture->mWidth;
+    img->height = texture->mHeight;
+    img->pixel_format = PixelFormat::RGBA;
+    img->data.resize(img->width * img->height * 4);
+    // swizzle bgra to rgba
+    for (size_t i = 0; i < img->width * img->height; i++) {
+      img->data[i * 4 + 0] = texture->pcData[i].r;
+      img->data[i * 4 + 1] = texture->pcData[i].g;
+      img->data[i * 4 + 2] = texture->pcData[i].b;
+      img->data[i * 4 + 3] = texture->pcData[i].a;
+    }
+  }
+  return img;
 }
 
 static std::shared_ptr<Material> BuildPbrMaterial(const aiMaterial* material) {
@@ -427,14 +459,14 @@ static double TimeModeToFrameRate(int time_mode, double custom_fps) {
   }
 }
 
-// Try to get the sample rate from scene metadata (FBX FrameRate/CustomFrameRate).
+// Try to get the sample rate from scene metadata
 // Returns the rate if found, or 0.0 if not available.
 static double GetSampleRateFromMetadata(const aiScene* scene) {
   if (!scene || !scene->mMetaData) {
     return 0.0;
   }
 
-  // FBX files store FrameRate as TimeMode enum (int) and CustomFrameRate (float)
+  // FBX files store FrameRate as TimeMode (int) and CustomFrameRate (float)
   int frame_rate_mode = 0;
   float custom_frame_rate = 0.0f;  // Assimp stores this as float, not double
 
@@ -452,15 +484,17 @@ static double GetSampleRateFromMetadata(const aiScene* scene) {
 
 // Detect the native sample rate of an animation by analyzing keyframe times.
 // Returns a rate clamped to [min_rate, max_rate].
-static double DetectAnimationSampleRate(const std::string& filename, const aiScene* scene,
-                                        const aiAnimation* anim, double min_rate, double max_rate) {
-
+static double DetectAnimationSampleRate(const std::string& filename,
+                                        const aiScene* scene,
+                                        const aiAnimation* anim,
+                                        double min_rate, double max_rate) {
   if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".bvh") {
     // BVH files only support constant frame rates,
     // so ticks per second is frames per second!
     double sample_rate = anim->mTicksPerSecond;
     return std::clamp(min_rate, sample_rate, max_rate);
-  } else if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".fbx") {
+  } else if (filename.size() > 4 &&
+             filename.substr(filename.size() - 4) == ".fbx") {
     // for fbx determine frame rate from metadata.
     double sample_rate = GetSampleRateFromMetadata(scene);
     if (sample_rate != 0.0) {
@@ -506,9 +540,10 @@ static double DetectAnimationSampleRate(const std::string& filename, const aiSce
   if (min_delta < std::numeric_limits<double>::max()) {
     double detected_rate = ticks_per_sec / min_delta;
 
-    if (filename.size() > 4 && (filename.substr(filename.size() - 4) == ".glb" ||
-                                filename.substr(filename.size() - 4) == ".gltf" ||
-                                filename.substr(filename.size() - 4) == ".vrm")) {
+    if (filename.size() > 4 && (
+            filename.substr(filename.size() - 4) == ".glb" ||
+            filename.substr(filename.size() - 4) == ".gltf" ||
+            filename.substr(filename.size() - 4) == ".vrm")) {
       // Snap to nearest integer to handle floating point precision issues
       // in glTF and other formats.
       detected_rate = std::round(detected_rate);
@@ -697,13 +732,22 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   // PrintNode(scene->mRootNode, "");
 
   std::map<std::string, std::shared_ptr<Node>> mesh_name_to_node_map;
-  asset->root_node = BuildNodeTree(scene, scene->mRootNode, asset->string_to_node_map,
+  asset->root_node = BuildNodeTree(scene, scene->mRootNode,
+                                   asset->string_to_node_map,
                                    mesh_name_to_node_map, asset->node_vec);
   asset->root_node->Update();  // update all the abs xforms in the tree.
   Log::D("num nodes = %zu\n", asset->string_to_node_map.size());
   Log::D("num meshes = %d\n", scene->mNumMeshes);
   Log::D("num skeletons = %d\n", scene->mNumSkeletons);
   Log::D("num animations = %d\n", scene->mNumAnimations);
+  Log::D("num materials = %d\n", scene->mNumMaterials);
+  Log::D("num textures = %d\n", scene->mNumTextures);
+
+  std::vector<std::shared_ptr<Image>> image_vec;
+  image_vec.reserve(scene->mNumTextures);
+  for (uint32_t i = 0; i < scene->mNumTextures; i++) {
+    image_vec.push_back(BuildTextureImage(scene->mTextures[i]));
+  }
 
   asset->mesh_vec.reserve(scene->mNumMeshes);
   for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
@@ -718,7 +762,8 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         if (!node) {
           Log::E("could not find \"%s\" in map!\n", ai_node->mName.C_Str());
         }
-        Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), ai_node->mName.C_Str());
+        Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
+               ai_node->mName.C_Str());
         asset->mesh_vec.push_back(BuildBoneMesh(mesh, node, buffers));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
@@ -737,7 +782,9 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
     static const double kMinSampleRate = 10.0;
     static const double kMaxSampleRate = 240.0;
-    double sample_rate = DetectAnimationSampleRate(filename, scene, aiAnim, kMinSampleRate, kMaxSampleRate);
+    double sample_rate = DetectAnimationSampleRate(filename, scene, aiAnim,
+                                                   kMinSampleRate,
+                                                   kMaxSampleRate);
 
     Log::D("  anim[%d]\n", i);
     Log::D("    mName = %s\n", aiAnim->mName.C_Str());

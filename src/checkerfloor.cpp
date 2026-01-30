@@ -94,4 +94,4 @@ void CheckerFloor::Render(const glm::mat4& camera_mat,
   floor_vao_->DrawElements(GL_TRIANGLES);
 }
 
-} // namespace hyper
+}  // namespace hyper

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -23,6 +24,7 @@ namespace hyper {
 
 // returns true on success, false on failure
 bool LoadFile(const std::string& filename, std::string& result);
+bool LoadBinaryFile(const std::string& filename, std::vector<uint8_t>& data);
 bool SaveFile(const std::string& filename, const std::string& data);
 
 // Iterate over codepoints in a utf-8 encoded string
@@ -65,10 +67,14 @@ void PrintVec(const glm::vec2& v2, const std::string& name);
 void PrintQuat(const glm::quat& q, const std::string& name);
 
 bool FuzzyEquals(float lhs, float rhs, float epsilon = 0.001f);
-bool FuzzyEquals(const glm::vec2& lhs, const glm::vec2& rhs, float epsilon = 0.001f);
-bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon = 0.001f);
-bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs, float epsilon = 0.001f);
-bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec2& lhs, const glm::vec2& rhs,
+                 float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs,
+                 float epsilon = 0.001f);
+bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs,
+                 float epsilon = 0.001f);
+bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs,
+                 float epsilon = 0.001f);
 
 void AppendSearchPath(const std::string& path);
 std::string FindFile(const std::string& filename);

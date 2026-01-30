@@ -65,6 +65,17 @@ bool LoadFile(const std::string& filename, std::string& data) {
   }
 }
 
+bool LoadBinaryFile(const std::string& filename, std::vector<uint8_t>& data) {
+  std::ifstream ifs(FindFile(filename), std::ios::in | std::ios::binary);
+  if (ifs.good()) {
+    data.assign(std::istreambuf_iterator<char>(ifs),
+                std::istreambuf_iterator<char>());
+    return true;
+  } else {
+    return false;
+  }
+}
+
 bool SaveFile(const std::string& filename, const std::string& data) {
   std::ofstream ofs(FindFile(filename), std::ofstream::out);
   if (ofs.good()) {
@@ -295,29 +306,38 @@ bool FuzzyEquals(float lhs, float rhs, float epsilon) {
 }
 
 bool FuzzyEquals(const glm::vec2& lhs, const glm::vec2& rhs, float epsilon) {
-  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon);
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) &&
+      FuzzyEquals(lhs.y, rhs.y, epsilon);
 }
 
 bool FuzzyEquals(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon) {
-  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) &&
+      FuzzyEquals(lhs.y, rhs.y, epsilon) &&
       FuzzyEquals(lhs.z, rhs.z, epsilon);
 }
 
 bool FuzzyEquals(const glm::vec4& lhs, const glm::vec4& rhs, float epsilon) {
-  return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
-      FuzzyEquals(lhs.z, rhs.z, epsilon) && FuzzyEquals(lhs.w, rhs.w, epsilon);
+  return FuzzyEquals(lhs.x, rhs.x, epsilon) &&
+      FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+      FuzzyEquals(lhs.z, rhs.z, epsilon) &&
+      FuzzyEquals(lhs.w, rhs.w, epsilon);
 }
 
 bool FuzzyEquals(const glm::quat& lhs, const glm::quat& rhs, float epsilon) {
-  // Check if quaternions are close (considering both q and -q represent the same rotation)
+  // Check if quaternions are close
+  // considering both q and -q represent the same rotation
   float dot = glm::dot(lhs, rhs);
   if (dot < 0.0f) {
     // If dot product is negative, compare with negated quaternion
-    return FuzzyEquals(lhs.x, -rhs.x, epsilon) && FuzzyEquals(lhs.y, -rhs.y, epsilon) &&
-        FuzzyEquals(lhs.z, -rhs.z, epsilon) && FuzzyEquals(lhs.w, -rhs.w, epsilon);
+    return FuzzyEquals(lhs.x, -rhs.x, epsilon) &&
+        FuzzyEquals(lhs.y, -rhs.y, epsilon) &&
+        FuzzyEquals(lhs.z, -rhs.z, epsilon) &&
+        FuzzyEquals(lhs.w, -rhs.w, epsilon);
   } else {
-    return FuzzyEquals(lhs.x, rhs.x, epsilon) && FuzzyEquals(lhs.y, rhs.y, epsilon) &&
-        FuzzyEquals(lhs.z, rhs.z, epsilon) && FuzzyEquals(lhs.w, rhs.w, epsilon);
+    return FuzzyEquals(lhs.x, rhs.x, epsilon) &&
+        FuzzyEquals(lhs.y, rhs.y, epsilon) &&
+        FuzzyEquals(lhs.z, rhs.z, epsilon) &&
+        FuzzyEquals(lhs.w, rhs.w, epsilon);
   }
 }
 
@@ -346,8 +366,10 @@ void AppendSearchPath(const std::string& path) {
 std::string FindFile(const std::string& filename) {
   // If filename is absolute or starts with ./ or ../, use it directly
   if (!filename.empty() && (filename[0] == '/' || filename[0] == '\\' ||
-      (filename.size() >= 2 && filename[0] == '.' && (filename[1] == '/' || filename[1] == '\\')) ||
-      (filename.size() >= 3 && filename[0] == '.' && filename[1] == '.' && (filename[2] == '/' || filename[2] == '\\')))) {
+      (filename.size() >= 2 && filename[0] == '.' &&
+       (filename[1] == '/' || filename[1] == '\\')) ||
+      (filename.size() >= 3 && filename[0] == '.' &&
+       filename[1] == '.' && (filename[2] == '/' || filename[2] == '\\')))) {
     return filename;
   }
 

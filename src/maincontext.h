@@ -52,4 +52,4 @@ struct MainContext {
 };
 #endif
 
-}  // namesapce hyper
+}  // namespace hyper

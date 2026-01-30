@@ -52,8 +52,10 @@ void DebugRenderer::Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
   Line(start_pos, end_pos, color, color);
 }
 
-void DebugRenderer::Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
-                         const glm::vec3& start_color, const glm::vec3& end_color) {
+void DebugRenderer::Line(const glm::vec3& start_pos,
+                         const glm::vec3& end_pos,
+                         const glm::vec3& start_color,
+                         const glm::vec3& end_color) {
   // AJT(TODO): dynamically resize buffers
   if (line_position_vec_.size() + 2 <= kMaxVertexCount) {
     line_position_vec_.push_back(start_pos);

@@ -17,11 +17,13 @@ namespace hyper {
 class Anim;
 class Mesh;
 class Node;
+struct Texture;
 
 struct Asset {
   std::vector<std::shared_ptr<Mesh>> mesh_vec;
   std::vector<std::shared_ptr<Anim>> anim_vec;
   std::vector<std::shared_ptr<Node>> node_vec;
+  std::vector<std::shared_ptr<Texture>> texture_vec;
   std::shared_ptr<Node> root_node;
   std::map<std::string, std::shared_ptr<Node>> string_to_node_map;
   std::shared_ptr<Node> FindNode(const std::string& name) {

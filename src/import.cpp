@@ -262,21 +262,24 @@ struct MeshBuffers {
 };
 
 static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
-  assert(mesh->HasPositions() &&
-         mesh->HasTextureCoords(0) &&
-         mesh->HasNormals());
+  assert(mesh->HasPositions() && mesh->HasNormals());
 
   std::vector<glm::vec3> posVec;
   std::vector<glm::vec2> uvVec;
   std::vector<glm::vec3> normVec;
   posVec.reserve(mesh->mNumVertices);
   uvVec.reserve(mesh->mNumVertices);
+
   for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
     const aiVector3D& v = mesh->mVertices[i];
     posVec.push_back(glm::vec3(v.x, v.y, v.z));
 
-    const aiVector3D& uv = mesh->mTextureCoords[0][i];
-    uvVec.push_back(glm::vec2(uv.x, uv.y));
+    if (mesh->HasTextureCoords(0)) {
+      const aiVector3D& uv = mesh->mTextureCoords[0][i];
+      uvVec.push_back(glm::vec2(uv.x, uv.y));
+    } else {
+      uvVec.push_back(glm::vec2(0.0f, 0.0f));
+    }
 
     const aiVector3D& n = mesh->mNormals[i];
     normVec.push_back(glm::vec3(n.x, n.y, n.z));
@@ -752,15 +755,16 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   asset->mesh_vec.reserve(scene->mNumMeshes);
   for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
     const aiMesh* mesh = scene->mMeshes[i];
-    if (mesh->HasPositions() && mesh->HasTextureCoords(0) &&
-        mesh->HasNormals()) {
+    if (mesh->HasPositions() && mesh->HasNormals()) {
       auto mat = BuildMaterial(scene->mMaterials[mesh->mMaterialIndex]);
       auto buffers = ImportMeshBuffers(mesh);
       if (mesh->HasBones()) {
         aiNode* ai_node = mesh->mBones[0]->mNode;
         auto node = asset->FindNode(ai_node->mName.C_Str());
         if (!node) {
-          Log::E("could not find \"%s\" in map!\n", ai_node->mName.C_Str());
+          Log::E("could not find node \"%s\" in asset map!\n",
+                 ai_node->mName.C_Str());
+          continue;
         }
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
                ai_node->mName.C_Str());
@@ -768,10 +772,17 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
         if (iter == mesh_name_to_node_map.end()) {
-          Log::E("could not find QQQ \"%s\" in map!\n", mesh->mName.C_Str());
+          Log::E("could not find mesh \"%s\" in node map!\n",
+                 mesh->mName.C_Str());
+          continue;
         }
         asset->mesh_vec.push_back(BuildMesh(iter->second, buffers));
       }
+    } else {
+      Log::W("mesh \"%s\" skipped, HasPositions = %s, HasNormals = %s\n",
+             mesh->mName.C_Str(),
+             mesh->HasPositions() ? "true" : "false",
+             mesh->HasNormals() ? "true" : "false");
     }
   }
 

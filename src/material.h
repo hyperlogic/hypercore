@@ -7,12 +7,15 @@
 
 #include <stdint.h>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "src/program.h"
 #include "src/util.h"
 
 namespace hyper {
+
+class Texture;
 
 class Material {
  public:
@@ -21,16 +24,21 @@ class Material {
     int32_t i32[4];
     uint32_t u32[4];
   };
-  explicit Material(std::shared_ptr<Program>& prog);
+  Material(const std::string& name, std::shared_ptr<Program>& prog);
   ~Material();
 
   DISABLE_COPY_AND_MOVE(Material);
 
   void AddUniform(const Program::Variable& var, const Value& val);
+  void AddTexture(const std::shared_ptr<Texture>& texture);
   void Bind() const;
+  const std::shared_ptr<Program>& prog() const { return prog_; }
+  bool HasTextures() const { return textures_.size() > 0; }
  protected:
+  std::string name_;
   std::shared_ptr<Program> prog_;
   std::vector<std::pair<Program::Variable, Value>> uniforms_;
+  std::vector<std::shared_ptr<Texture>> textures_;
 };
 
 }  // namespace hyper

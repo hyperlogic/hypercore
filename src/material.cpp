@@ -5,18 +5,30 @@
 
 #include "src/material.h"
 
+#include <memory>
+#include <string>
+
 #include <glm/glm.hpp>
 
 #include "src/glincludes.h"
+#include "src/texture.h"
 
 namespace hyper {
 
-Material::Material(std::shared_ptr<Program>& prog) {
+Material::Material(const std::string& name, std::shared_ptr<Program>& prog) {
+  name_ = name;
   prog_ = prog;
+}
+
+Material::~Material() {
 }
 
 void Material::AddUniform(const Program::Variable& var, const Value& val) {
   uniforms_.push_back(std::pair(var, val));
+}
+
+void Material::AddTexture(const std::shared_ptr<Texture>& texture) {
+  textures_.push_back(texture);
 }
 
 void Material::Bind() const {
@@ -29,16 +41,13 @@ void Material::Bind() const {
         prog_->SetUniformRaw(var.loc, val.f32[0]);
         break;
       case GL_FLOAT_VEC2:
-        prog_->SetUniformRaw(var.loc,
-                             reinterpret_cast<const glm::vec2&>(val.f32));
+        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec2&>(val.f32));
         break;
       case GL_FLOAT_VEC3:
-        prog_->SetUniformRaw(var.loc,
-                             reinterpret_cast<const glm::vec3&>(val.f32));
+        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec3&>(val.f32));
         break;
       case GL_FLOAT_VEC4:
-        prog_->SetUniformRaw(var.loc,
-                             reinterpret_cast<const glm::vec4&>(val.f32));
+        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec4&>(val.f32));
         break;
       case GL_INT:
         prog_->SetUniformRaw(var.loc, val.i32[0]);
@@ -48,9 +57,16 @@ void Material::Bind() const {
         break;
       default:
         // just support basic types for now.
-        Log::W("Illegal type %d for material!\n");
+        Log::W("Illegal type %d for material %s!\n", name_.c_str());
         break;
     }
+  }
+
+  // AJT(TODO) support more then one texture with differnt semantics
+  if (textures_.size() > 0) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textures_[0]->texture);
+    prog_->SetUniform("colorTex", 0);
   }
 }
 

@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "src/glincludes.h"
+#include "src/material.h"
 #include "src/program.h"
 #include "src/texture.h"
 #include "src/util.h"
@@ -25,11 +26,10 @@ const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
 const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.3f);
 
 BoneMesh::BoneMesh(std::shared_ptr<VertexArrayObject> vao,
-                   std::shared_ptr<Program> prog,
-                   std::shared_ptr<Texture> tex,
+                   std::shared_ptr<Material> mat,
                    std::shared_ptr<Node> node,
                    std::vector<glm::mat4> inv_bind_pose_vec)
-    : Mesh(vao, prog, tex, node),
+    : Mesh(vao, mat, node),
       inv_bind_pose_vec_(inv_bind_pose_vec) {
 }
 
@@ -51,17 +51,14 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   glm::mat4 model_view_mat = glm::inverse(camera_mat) * m;
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(m)));
 
-  prog_->Bind();
-  prog_->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
-  prog_->SetUniform("normalModelMat", normal_model_mat);
-  prog_->SetUniform("lightDir", glm::normalize(kLightDir));
-  prog_->SetUniform("lightColor", kLightColor);
-  prog_->SetUniform("ambientColor", kAmbientColor);
-  prog_->SetUniform("boneMats[0]", abs_xform_vec_);
+  mat_->Bind();
+  mat_->prog()->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
+  mat_->prog()->SetUniform("normalModelMat", normal_model_mat);
+  mat_->prog()->SetUniform("lightDir", glm::normalize(kLightDir));
+  mat_->prog()->SetUniform("lightColor", kLightColor);
+  mat_->prog()->SetUniform("ambientColor", kAmbientColor);
+  mat_->prog()->SetUniform("boneMats[0]", abs_xform_vec_);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex_->texture);
-  prog_->SetUniform("colorTex", 0);
   vao_->DrawElements(GL_TRIANGLES);
 }
 

@@ -18,9 +18,8 @@ namespace hyper {
 
 class BoneMesh : public Mesh {
  public:
-  BoneMesh(std::shared_ptr<VertexArrayObject> vao_in,
-           std::shared_ptr<Program> prog_in,
-           std::shared_ptr<Texture> tex_in,
+  BoneMesh(std::shared_ptr<VertexArrayObject> vao,
+           std::shared_ptr<Material> mat,
            std::shared_ptr<Node> node,
            std::vector<glm::mat4> inv_bind_pose_vec_in);
 

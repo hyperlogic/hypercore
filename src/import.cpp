@@ -40,6 +40,7 @@
 #include "src/bonemesh.h"
 #include "src/image.h"
 #include "src/log.h"
+#include "src/material.h"
 #include "src/mesh.h"
 #include "src/program.h"
 #include "src/texture.h"
@@ -137,6 +138,7 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   return img;
 }
 
+/*
 static std::shared_ptr<Material> BuildPbrMaterial(const aiMaterial* material) {
   int32_t shadingMode = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shadingMode, nullptr);
@@ -162,11 +164,15 @@ static std::shared_ptr<Material> BuildPbrMaterial(const aiMaterial* material) {
 
   return mat;
 }
+*/
 
-static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material) {
+static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material, bool has_bones) {
   assert(material);
-  // AI_MATKEY_SHADING_MODEL
 
+  auto prog = std::make_shared<Program>();
+  auto mat = std::make_shared<Material>(material->GetName().C_Str(), prog);
+
+  /*
   int32_t shadingMode = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shadingMode, nullptr);
   switch (shadingMode) {
@@ -201,6 +207,45 @@ static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material) {
       Log::W("PBR shading unsupported\n");
       return BuildPbrMaterial(material);
   }
+  */
+
+  if (material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
+    prog->AddMacro("TEXTUREINFO", "#define HAS_TEXTURE");
+
+    // AJT(TODO) use the texture from the scene?
+    Image img;
+    if (!img.Load("texture/checkerboard.png")) {
+      Log::E("Error loading checkerboard.png\n");
+      return nullptr;
+    }
+    img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
+    Texture::Params texParams = {
+      FilterType::LinearMipmapLinear,
+      FilterType::Linear,
+      WrapType::Repeat,
+      WrapType::Repeat
+    };
+    auto tex = std::make_shared<Texture>(img, texParams);
+    mat->AddTexture(tex);
+
+    // AJT(TODO) add texture binding?
+  } else {
+    prog->AddMacro("TEXTUREINFO", "");
+  }
+
+  if (has_bones) {
+    if (!prog->LoadVertFrag("shader/bone_mesh_vert.glsl", "shader/bone_mesh_frag.glsl")) {
+      Log::E("Error loading bone mesh shader!\n");
+      return nullptr;
+    }
+  } else {
+    if (!prog->LoadVertFrag("shader/mesh_vert.glsl", "shader/mesh_frag.glsl")) {
+      Log::E("Error loading mesh shader!\n");
+      return nullptr;
+    }
+  }
+
+  return mat;
 }
 
 static std::shared_ptr<Node> BuildNodeTree(
@@ -299,50 +344,37 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
   auto posBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, posVec);
   auto uvBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, uvVec);
   auto normBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, normVec);
-  auto indexBuffer = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER,
-                                                    indexVec);
+  auto indexBuffer = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, indexVec);
 
-  return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer,
-                                       indexBuffer);
+  return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer, indexBuffer);
 }
 
-std::shared_ptr<Mesh> BuildMesh(std::shared_ptr<Node> node,
-                                std::shared_ptr<MeshBuffers> buffers) {
-  // AJT(TODO) maybe create an actual material?!?
-  auto prog = std::make_shared<Program>();
-  if (!prog->LoadVertFrag("shader/mesh_vert.glsl", "shader/mesh_frag.glsl")) {
-    Log::E("Error loading mesh shader!\n");
-    return nullptr;
-  }
-
-  // AJT(TODO) use the texture from the mesh?!?
-  Image img;
-  if (!img.Load("texture/checkerboard.png")) {
-    Log::E("Error loading checkerboard.png\n");
-    return nullptr;
-  }
-  img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
-  Texture::Params texParams = {FilterType::LinearMipmapLinear,
-                               FilterType::Linear,
-                               WrapType::Repeat,
-                               WrapType::Repeat};
-  auto tex = std::make_shared<Texture>(img, texParams);
+static std::shared_ptr<Mesh> BuildMesh(const aiMesh* ai_mesh,
+                                       const aiMaterial* ai_mat,
+                                       std::shared_ptr<Node> node,
+                                       std::shared_ptr<MeshBuffers> buffers) {
+  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones());
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
-  vao->SetAttribBuffer(prog->GetAttribLoc("position"), buffers->posBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("uv"), buffers->uvBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("normal"), buffers->normBuffer);
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
+  if (mat->HasTextures()) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
+  }
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
   vao->SetElementBuffer(buffers->indexBuffer);
-  return std::make_shared<Mesh>(vao, prog, tex, node);
+  return std::make_shared<Mesh>(vao, mat, node);
 }
 
-std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
-                                    std::shared_ptr<Node> node,
-                                    std::shared_ptr<MeshBuffers> buffers) {
+static std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
+                                           const aiMaterial* ai_mat,
+                                           std::shared_ptr<Node> node,
+                                           std::shared_ptr<MeshBuffers> buffers) {
   assert(node);
   assert(ai_mesh->HasBones());
   assert(AI_LMW_MAX_WEIGHTS == 4);
+
+  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones());
 
   // the order of mBones array is NOT the same as the order of the nodes.
   // we use node_vec and name_to_idx_map to help re-order the indices.
@@ -406,38 +438,18 @@ std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
   auto boneIndicesBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER,
                                                           bone_indices_vec);
 
-  // AJT(TODO): maybe create an actual material?!?
-  auto prog = std::make_shared<Program>();
-  if (!prog->LoadVertFrag("shader/bone_mesh_vert.glsl",
-                          "shader/bone_mesh_frag.glsl")) {
-    Log::E("Error loading mesh shader!\n");
-    return nullptr;
-  }
-
-  // AJT(TODO): use the texture from the mesh?!?
-  Image img;
-  if (!img.Load("texture/checkerboard.png")) {
-    Log::E("Error loading checkerboard.png\n");
-    return nullptr;
-  }
-  img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
-  Texture::Params texParams = {FilterType::LinearMipmapLinear,
-                               FilterType::Linear,
-                               WrapType::Repeat,
-                               WrapType::Repeat};
-  auto tex = std::make_shared<Texture>(img, texParams);
-
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
-  vao->SetAttribBuffer(prog->GetAttribLoc("position"), buffers->posBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("uv"), buffers->uvBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("normal"), buffers->normBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("boneWeights"), boneWeightsBuffer);
-  vao->SetAttribBuffer(prog->GetAttribLoc("boneIndices"), boneIndicesBuffer);
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
+  if (mat->HasTextures()) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
+  }
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("boneWeights"), boneWeightsBuffer);
+  vao->SetAttribBuffer(mat->prog()->GetAttribLoc("boneIndices"), boneIndicesBuffer);
   vao->SetElementBuffer(buffers->indexBuffer);
 
-  auto boneMesh = std::make_shared<BoneMesh>(vao, prog, tex, node,
-                                             inv_bind_pose_vec);
+  auto boneMesh = std::make_shared<BoneMesh>(vao, mat, node, inv_bind_pose_vec);
   return boneMesh;
 }
 
@@ -757,8 +769,8 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
     const aiMesh* mesh = scene->mMeshes[i];
     if (mesh->HasPositions() && mesh->HasNormals()) {
-      auto mat = BuildMaterial(scene->mMaterials[mesh->mMaterialIndex]);
       auto buffers = ImportMeshBuffers(mesh);
+      aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
       if (mesh->HasBones()) {
         aiNode* ai_node = mesh->mBones[0]->mNode;
         auto node = asset->FindNode(ai_node->mName.C_Str());
@@ -769,7 +781,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         }
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
                ai_node->mName.C_Str());
-        asset->mesh_vec.push_back(BuildBoneMesh(mesh, node, buffers));
+        asset->mesh_vec.push_back(BuildBoneMesh(mesh, mat, node, buffers));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
         if (iter == mesh_name_to_node_map.end()) {
@@ -777,7 +789,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
                  mesh->mName.C_Str());
           continue;
         }
-        asset->mesh_vec.push_back(BuildMesh(iter->second, buffers));
+        asset->mesh_vec.push_back(BuildMesh(mesh, mat, iter->second, buffers));
       }
     } else {
       Log::W("mesh \"%s\" skipped, HasPositions = %s, HasNormals = %s\n",

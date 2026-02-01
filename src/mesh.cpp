@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "src/glincludes.h"
+#include "src/material.h"
 #include "src/program.h"
 #include "src/texture.h"
 #include "src/util.h"
@@ -21,27 +22,26 @@ const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
 const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.3f);
 
 Mesh::Mesh(std::shared_ptr<VertexArrayObject> vao,
-           std::shared_ptr<Program> prog,
-           std::shared_ptr<Texture> tex,
+           std::shared_ptr<Material> mat,
            std::shared_ptr<Node> node)
-    : vao_(vao), prog_(prog), tex_(tex), node_(node) {
+    : vao_(vao), mat_(mat), node_(node) {
 }
 
 void Mesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
                   const glm::vec4& viewport, const glm::vec2& near_far) {
   glm::mat4 xform = node_->abs_xform();
-  prog_->Bind();
+
+  mat_->Bind();
+
   glm::mat4 model_view_mat = glm::inverse(camera_mat) * xform;
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(xform)));
 
-  prog_->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
-  prog_->SetUniform("normalModelMat", normal_model_mat);
-  prog_->SetUniform("lightDir", glm::normalize(kLightDir));
-  prog_->SetUniform("lightColor", kLightColor);
-  prog_->SetUniform("ambientColor", kAmbientColor);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex_->texture);
-  prog_->SetUniform("colorTex", 0);
+  mat_->prog()->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
+  mat_->prog()->SetUniform("normalModelMat", normal_model_mat);
+  mat_->prog()->SetUniform("lightDir", glm::normalize(kLightDir));
+  mat_->prog()->SetUniform("lightColor", kLightColor);
+  mat_->prog()->SetUniform("ambientColor", kAmbientColor);
+
   vao_->DrawElements(GL_TRIANGLES);
 }
 

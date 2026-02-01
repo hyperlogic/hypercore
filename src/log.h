@@ -10,7 +10,8 @@
 
 namespace hyper {
 
-struct Log {
+class Log {
+ public:
   enum LogLevel {
     Verbose = 0,
     Debug = 1,

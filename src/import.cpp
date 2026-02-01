@@ -245,7 +245,8 @@ static std::shared_ptr<Node> BuildNodeTree(
   return node;
 }
 
-struct MeshBuffers {
+class MeshBuffers {
+ public:
   MeshBuffers(std::shared_ptr<BufferObject> posBufferIn,
               std::shared_ptr<BufferObject> uvBufferIn,
               std::shared_ptr<BufferObject> normBufferIn,

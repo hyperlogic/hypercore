@@ -8,13 +8,18 @@
 #include <stdint.h>
 #include <memory>
 
+#include "src/util.h"
+
 namespace hyper {
 
-struct Texture;
+class Texture;
 
-struct FrameBuffer {
+class FrameBuffer {
+ public:
   FrameBuffer();
   ~FrameBuffer();
+
+  DISABLE_COPY_AND_MOVE(FrameBuffer);
 
   void Bind() const;
   void AttachColor(std::shared_ptr<Texture> color_tex);

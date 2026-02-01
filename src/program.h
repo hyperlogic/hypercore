@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 
 #include "src/log.h"
+#include "src/util.h"
 
 namespace hyper {
 
@@ -20,6 +21,8 @@ class Program {
  public:
   Program();
   ~Program();
+
+  DISABLE_COPY_AND_MOVE(Program);
 
   // used to inject #defines or other code into shaders
   // AddMacro("FOO", "BAR");
@@ -85,7 +88,8 @@ class Program {
   int frag_shader_;
   int compute_shader_;
 
-  struct Variable {
+  class Variable {
+   public:
     int size;
     uint32_t type;
     int loc;

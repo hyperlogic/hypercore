@@ -12,6 +12,8 @@
 
 #include <glm/glm.hpp>
 
+#include "src/util.h"
+
 #ifndef __GL_H__
 // AJT: ANDROID: TODO: HACK TO WORK AROUND glBufferStorage
 #define GL_DYNAMIC_STORAGE_BIT            0x0100
@@ -47,8 +49,9 @@ class BufferObject {
                unsigned int flags = 0);
   BufferObject(int target_in, const std::vector<uint32_t>& data,
                unsigned int flags = 0);
-  BufferObject(const BufferObject& orig) = delete;
   ~BufferObject();
+
+  DISABLE_COPY_AND_MOVE(BufferObject);
 
   void Bind() const;
   void Unbind() const;
@@ -74,6 +77,8 @@ class VertexArrayObject {
  public:
   VertexArrayObject();
   ~VertexArrayObject();
+
+  DISABLE_COPY_AND_MOVE(VertexArrayObject);
 
   void Bind() const;
   void Unbind() const;

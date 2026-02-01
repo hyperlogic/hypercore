@@ -16,7 +16,7 @@
 namespace hyper {
 
 class Program;
-struct Texture;
+class Texture;
 class VertexArrayObject;
 
 class TextRenderer {

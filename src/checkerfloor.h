@@ -13,7 +13,7 @@
 
 namespace hyper {
 
-struct Texture;
+class Texture;
 class Program;
 class VertexArrayObject;
 

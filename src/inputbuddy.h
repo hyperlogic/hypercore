@@ -44,7 +44,8 @@ class InputBuddy {
   void SetRelativeMouseMode(bool val);
 
   // based on an xbox controler
-  struct Joypad {
+  class Joypad {
+   public:
     Joypad() {
       memset(this, 0, sizeof(Joypad));
     }

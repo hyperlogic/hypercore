@@ -7,9 +7,11 @@
 
 #include <stdint.h>
 
+#include "src/util.h"
+
 namespace hyper {
 
-struct Image;
+class Image;
 
 enum class FilterType {
   Nearest = 0,
@@ -27,7 +29,8 @@ enum class WrapType {
   MirrorClampToEdge
 };
 
-struct Texture {
+class Texture {
+ public:
   struct Params {
     FilterType min_filter;
     FilterType mag_filter;
@@ -39,6 +42,8 @@ struct Texture {
   Texture(uint32_t width, uint32_t height, uint32_t internal_format,
           uint32_t format, uint32_t type, const Params& params);
   ~Texture();
+
+  DISABLE_COPY_AND_MOVE(Texture);
 
   void Bind(int unit) const;
 

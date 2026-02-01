@@ -17,10 +17,10 @@ namespace hyper {
 
 class Hierarchy;
 class Program;
-struct Texture;
+class Texture;
 class VertexArrayObject;
 
-struct Material {
+class Material {
  public:
   enum class Mode {
     Pbr = 0

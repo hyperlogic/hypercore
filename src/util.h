@@ -20,6 +20,12 @@ void GLErrorCheck(const char* message);
 #define GL_ERROR_CHECK(x)
 #endif
 
+#define DISABLE_COPY_AND_MOVE(ClassName) \
+    ClassName(const ClassName&) = delete; \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName(ClassName&&) = delete; \
+    ClassName& operator=(ClassName&&) = delete
+
 namespace hyper {
 
 // returns true on success, false on failure

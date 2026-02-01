@@ -16,7 +16,7 @@
 
 #include "src/maincontext.h"
 #include "src/optionparser.h"
-
+#include "src/util.h"
 
 union SDL_Event;
 
@@ -25,11 +25,11 @@ namespace hyper {
 class CheckerFloor;
 class DebugRenderer;
 class FlyCam;
-struct FrameBuffer;
+class FrameBuffer;
 class InputBuddy;
 class Program;
 class TextRenderer;
-struct Texture;
+class Texture;
 
 class AppBase {
  public:
@@ -38,6 +38,8 @@ class AppBase {
 
   explicit AppBase(MainContext& mainContextIn);
   virtual ~AppBase();
+
+  DISABLE_COPY_AND_MOVE(AppBase);
 
   enum ParseResult {
     SUCCESS_RESULT,

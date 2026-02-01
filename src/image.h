@@ -18,7 +18,8 @@ enum class PixelFormat {
   RGBA
 };
 
-struct Image {
+class Image {
+ public:
   Image();
   bool LoadBytes(const uint8_t* bytes, size_t num_bytes);
   bool Load(const std::string& filename_in);

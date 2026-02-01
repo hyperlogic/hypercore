@@ -17,9 +17,10 @@ namespace hyper {
 class Anim;
 class Mesh;
 class Node;
-struct Texture;
+class Texture;
 
-struct Asset {
+class Asset {
+ public:
   std::vector<std::shared_ptr<Mesh>> mesh_vec;
   std::vector<std::shared_ptr<Anim>> anim_vec;
   std::vector<std::shared_ptr<Node>> node_vec;

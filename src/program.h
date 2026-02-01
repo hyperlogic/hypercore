@@ -19,6 +19,13 @@ namespace hyper {
 
 class Program {
  public:
+  class Variable {
+   public:
+    int size;
+    uint32_t type;
+    int loc;
+  };
+
   Program();
   ~Program();
 
@@ -87,13 +94,6 @@ class Program {
   int geom_shader_;
   int frag_shader_;
   int compute_shader_;
-
-  class Variable {
-   public:
-    int size;
-    uint32_t type;
-    int loc;
-  };
 
   std::unordered_map<std::string, Variable> uniforms_;
   std::unordered_map<std::string, Variable> attribs_;

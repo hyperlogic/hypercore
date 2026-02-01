@@ -135,6 +135,7 @@ add_library(hypercore STATIC
     src/inputbuddy.cpp
     src/log.cpp
     src/node.cpp
+    src/material.cpp
     src/mesh.cpp
     src/program.cpp
     src/sdl_main.cpp

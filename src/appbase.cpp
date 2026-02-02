@@ -573,7 +573,9 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
     debug_renderer_->Transform(origin_mat, scene_cm_units_ ? 100.0f : 1.0f);
 
     // keep the floor aligned to world up, and world units.
-    floor_->Render(scene_mat_ * camera_mat, proj_mat, viewport, near_far);
+    if (!scene_hide_floor_) {
+      floor_->Render(scene_mat_ * camera_mat, proj_mat, viewport, near_far);
+    }
 
     if (opt_.drawDebug) {
       debug_renderer_->Render(camera_mat, proj_mat, viewport, near_far);
@@ -676,6 +678,7 @@ void AppBase::RenderImGui() {
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Scene")) {
+      ImGui::MenuItem("Hide Floor", nullptr, &scene_hide_floor_);
       bool scene_mat_changed = false;
       if (ImGui::MenuItem("Z-up", nullptr, &scene_z_up_)) {
         scene_mat_changed = true;

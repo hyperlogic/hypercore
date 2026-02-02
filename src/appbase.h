@@ -130,6 +130,7 @@ class AppBase {
 
   std::shared_ptr<CheckerFloor> floor_;
 
+  bool scene_hide_floor_ = false;
   bool scene_z_up_ = false;
   bool scene_cm_units_ = false;
   glm::mat4 scene_mat_;

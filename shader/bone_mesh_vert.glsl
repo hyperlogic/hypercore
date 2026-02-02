@@ -8,7 +8,7 @@
 //
 
 /*%%HEADER%%*/
-/*%%TEXTUREINFO%%*/
+/*%%MATERIALINFO%%*/
 
 #define MAX_BONES 200
 #define MAX_BONE_INFLUENCES 4  // Typically 4 bones per vertex
@@ -18,16 +18,15 @@ uniform mat3 normalModelMat;
 uniform mat4 boneMats[MAX_BONES];
 
 in vec3 position;
-#ifdef HAS_TEXTURE
-in vec2 uv;
-#endif
 in vec3 normal;
 in vec4 boneWeights;
 in vec4 boneIndices;
 
 #ifdef HAS_TEXTURE
+in vec2 uv;
 out vec2 frag_uv;
 #endif
+
 out vec3 frag_normal;
 
 void main(void)

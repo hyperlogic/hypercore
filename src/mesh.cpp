@@ -40,7 +40,6 @@ void Mesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   mat_->prog()->SetUniform("normalModelMat", normal_model_mat);
   mat_->prog()->SetUniform("lightDir", glm::normalize(kLightDir));
   mat_->prog()->SetUniform("lightColor", kLightColor);
-  mat_->prog()->SetUniform("ambientColor", kAmbientColor);
 
   vao_->DrawElements(GL_TRIANGLES);
 }

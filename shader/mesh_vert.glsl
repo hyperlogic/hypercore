@@ -8,7 +8,7 @@
 //
 
 /*%%HEADER%%*/
-/*%%TEXTUREINFO%%*/
+/*%%MATERIALINFO%%*/
 
 uniform mat4 modelViewProjMat;
 uniform mat3 normalModelMat;

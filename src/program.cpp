@@ -321,6 +321,21 @@ int Program::GetUniformLoc(const std::string& name) const {
   }
 }
 
+const Program::Variable& Program::GetUniformVar(const std::string& name) const {
+  auto iter = uniforms_.find(name);
+  if (iter != uniforms_.end()) {
+    return iter->second;
+  } else {
+    Log::W("Could not find uniform \"%s\" for program \"%s\"\n",
+           name.c_str(), debug_name_.c_str());
+    assert(false);
+    static Variable var;
+    memset(&var, 0, sizeof(Variable));
+    return var;
+  }
+}
+
+
 int Program::GetAttribLoc(const std::string& name) const {
   auto iter = attribs_.find(name);
   if (iter != attribs_.end()) {

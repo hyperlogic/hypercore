@@ -33,6 +33,7 @@ class Material {
   void AddTexture(const std::shared_ptr<Texture>& texture);
   void Bind() const;
   const std::shared_ptr<Program>& prog() const { return prog_; }
+  const std::string& name() const { return name_; }
   bool HasTextures() const { return textures_.size() > 0; }
  protected:
   std::string name_;

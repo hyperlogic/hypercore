@@ -45,6 +45,7 @@ class Program {
   void Bind() const;
 
   int GetUniformLoc(const std::string& name) const;
+  const Variable& GetUniformVar(const std::string& name) const;
   int GetAttribLoc(const std::string& name) const;
 
   template <typename T>

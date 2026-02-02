@@ -110,6 +110,7 @@ static void PrintNode(const aiNode* node, const std::string& indent) {
 static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   assert(texture);
   auto img = std::make_shared<Image>();
+  img->filename = texture->mFilename.C_Str();
   if (texture->mHeight == 0) {
     assert(texture->pcData);
     // this is a compressed texture, try loading it.
@@ -122,7 +123,6 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
            texture->mFilename.C_Str(), texture->achFormatHint, img->width,
            img->height);
   } else {
-    img->filename = texture->mFilename.C_Str();
     img->width = texture->mWidth;
     img->height = texture->mHeight;
     img->pixel_format = PixelFormat::RGBA;
@@ -138,100 +138,22 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   return img;
 }
 
-/*
-static std::shared_ptr<Material> BuildPbrMaterial(const aiMaterial* material) {
-  int32_t shadingMode = -1;
-  material->Get(AI_MATKEY_SHADING_MODEL, &shadingMode, nullptr);
-  assert(shadingMode == aiShadingMode_PBR_BRDF);
-
-  auto mat = std::make_shared<Material>();
-  mat->name = material->GetName().C_Str();
-
-  // #define AI_MATKEY_USE_COLOR_MAP "$mat.useColorMap", 0, 0
-
-  // albedo
-  // aiTextureType_BASE_COLOR = 12,
-  // #define AI_MATKEY_BASE_COLOR "$clr.base", 0, 0
-  // #define AI_MATKEY_BASE_COLOR_TEXTURE aiTextureType_BASE_COLOR, 0
-
-  // aiTextureType_NORMAL_CAMERA = 13,
-  // aiTextureType_EMISSION_COLOR = 14,
-  // aiTextureType_METALNESS = 15,
-  // aiTextureType_DIFFUSE_ROUGHNESS = 16,
-  // aiTextureType_AMBIENT_OCCLUSION = 17,
-
-  // metallic vs glossiness
-
-  return mat;
-}
-*/
-
-static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material, bool has_bones) {
+static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material,
+                                               bool has_bones,
+                                               const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(material);
 
   auto prog = std::make_shared<Program>();
-  auto mat = std::make_shared<Material>(material->GetName().C_Str(), prog);
+  std::string mat_name = material->GetName().C_Str();
+  auto mat = std::make_shared<Material>(mat_name, prog);
 
-  /*
-  int32_t shadingMode = -1;
-  material->Get(AI_MATKEY_SHADING_MODEL, &shadingMode, nullptr);
-  switch (shadingMode) {
-    case aiShadingMode_Flat:
-      Log::W("Flat shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_Gouraud:
-      Log::W("Gouraud shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_Phong:
-      Log::W("Phong shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_Blinn:
-      Log::W("Blinn shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_Toon:
-      Log::W("Toon shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_OrenNayar:
-      Log::W("orenNayar shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_NoShading:
-      Log::W("No shading unsupported\n");
-      return nullptr;
-    case aiShadingMode_Fresnel:
-      Log::W("Fresnel shading unsupported\n");
-      return nullptr;
-    default:
-      Log::W("Unknown shading mode\n");
-      return nullptr;
-    case aiShadingMode_PBR_BRDF:
-      Log::W("PBR shading unsupported\n");
-      return BuildPbrMaterial(material);
+  std::string mat_info = "";
+
+  if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+    mat_info += "#define HAS_TEXTURE\n";
   }
-  */
 
-  if (material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
-    prog->AddMacro("TEXTUREINFO", "#define HAS_TEXTURE");
-
-    // AJT(TODO) use the texture from the scene?
-    Image img;
-    if (!img.Load("texture/checkerboard.png")) {
-      Log::E("Error loading checkerboard.png\n");
-      return nullptr;
-    }
-    img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
-    Texture::Params texParams = {
-      FilterType::LinearMipmapLinear,
-      FilterType::Linear,
-      WrapType::Repeat,
-      WrapType::Repeat
-    };
-    auto tex = std::make_shared<Texture>(img, texParams);
-    mat->AddTexture(tex);
-
-    // AJT(TODO) add texture binding?
-  } else {
-    prog->AddMacro("TEXTUREINFO", "");
-  }
+  prog->AddMacro("MATERIALINFO", mat_info);
 
   if (has_bones) {
     if (!prog->LoadVertFrag("shader/bone_mesh_vert.glsl", "shader/bone_mesh_frag.glsl")) {
@@ -242,6 +164,92 @@ static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material, bool 
     if (!prog->LoadVertFrag("shader/mesh_vert.glsl", "shader/mesh_frag.glsl")) {
       Log::E("Error loading mesh shader!\n");
       return nullptr;
+    }
+  }
+
+  bool twosided = false;
+  material->Get(AI_MATKEY_TWOSIDED, twosided);
+
+  int32_t shading_model = -1;
+  material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
+
+  bool enable_wireframe = false;
+  material->Get(AI_MATKEY_ENABLE_WIREFRAME, enable_wireframe);
+
+  float opacity = 1.0f;
+  material->Get(AI_MATKEY_OPACITY, opacity);
+  Material::Value val;
+  val.f32[0] = opacity;
+  mat->AddUniform(mat->prog()->GetUniformVar("opacity"), val);
+
+  aiColor3D color_diffuse(1.0f, 1.0f, 1.0f);
+  material->Get(AI_MATKEY_COLOR_DIFFUSE, color_diffuse);
+  val.f32[0] = color_diffuse.r;
+  val.f32[1] = color_diffuse.g;
+  val.f32[2] = color_diffuse.b;
+  mat->AddUniform(mat->prog()->GetUniformVar("color_diffuse"), val);
+
+  aiColor3D color_ambient(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_DIFFUSE, color_ambient);
+  val.f32[0] = color_ambient.r;
+  val.f32[1] = color_ambient.g;
+  val.f32[2] = color_ambient.b;
+  mat->AddUniform(mat->prog()->GetUniformVar("color_ambient"), val);
+
+  aiColor3D color_specular(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_SPECULAR, color_specular);
+
+  aiColor3D color_emissive(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_SPECULAR, color_emissive);
+
+  if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+    bool found_image = false;
+    aiString path;
+    aiTextureMapping mapping;
+    if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping) > 0) {
+      Log::W("Failed to find diffuse texture in material \"%s\"\n", mat_name.c_str());
+    } else {
+      // TODO(AJT): load from mapping
+      Texture::Params texParams = {
+        FilterType::LinearMipmapLinear,
+        FilterType::Linear,
+        WrapType::Repeat,
+        WrapType::Repeat
+      };
+      if (path.data[0] == '*') {
+        int idx = std::atoi(path.data + 1);
+        auto tex = std::make_shared<Texture>(*image_vec[idx], texParams);
+        mat->AddTexture(tex);
+        found_image = true;
+      } else {
+        for (auto& img : image_vec) {
+          if (img->filename == path.data) {
+            auto tex = std::make_shared<Texture>(*img, texParams);
+            mat->AddTexture(tex);
+            found_image = true;
+          }
+        }
+      }
+      if (!found_image) {
+        Log::W("Failed to find diffuse texture \"%s\" in material \"%s\"\n", path.data, mat_name.c_str());
+      }
+    }
+
+    if (!found_image) {
+      Image img;
+      if (!img.Load("texture/checkerboard.png")) {
+        Log::E("Error loading checkerboard.png\n");
+        return nullptr;
+      }
+      img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
+      Texture::Params texParams = {
+        FilterType::LinearMipmapLinear,
+        FilterType::Linear,
+        WrapType::Repeat,
+        WrapType::Repeat
+      };
+      auto tex = std::make_shared<Texture>(img, texParams);
+      mat->AddTexture(tex);
     }
   }
 
@@ -352,8 +360,9 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
 static std::shared_ptr<Mesh> BuildMesh(const aiMesh* ai_mesh,
                                        const aiMaterial* ai_mat,
                                        std::shared_ptr<Node> node,
-                                       std::shared_ptr<MeshBuffers> buffers) {
-  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones());
+                                       std::shared_ptr<MeshBuffers> buffers,
+                                       const std::vector<std::shared_ptr<Image>>& image_vec) {
+  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones(), image_vec);
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
@@ -369,12 +378,13 @@ static std::shared_ptr<Mesh> BuildMesh(const aiMesh* ai_mesh,
 static std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
                                            const aiMaterial* ai_mat,
                                            std::shared_ptr<Node> node,
-                                           std::shared_ptr<MeshBuffers> buffers) {
+                                           std::shared_ptr<MeshBuffers> buffers,
+                                           const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(node);
   assert(ai_mesh->HasBones());
   assert(AI_LMW_MAX_WEIGHTS == 4);
 
-  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones());
+  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones(), image_vec);
 
   // the order of mBones array is NOT the same as the order of the nodes.
   // we use node_vec and name_to_idx_map to help re-order the indices.
@@ -390,10 +400,8 @@ static std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
     name_to_idx_map[name] = static_cast<int32_t>(i);
   }
 
-  std::vector<glm::vec4> bone_weights_vec(ai_mesh->mNumVertices,
-                                          glm::vec4(0.0f));
-  std::vector<glm::vec4> bone_indices_vec(ai_mesh->mNumVertices,
-                                          glm::vec4(0.0f));
+  std::vector<glm::vec4> bone_weights_vec(ai_mesh->mNumVertices, glm::vec4(0.0f));
+  std::vector<glm::vec4> bone_indices_vec(ai_mesh->mNumVertices, glm::vec4(0.0f));
   std::vector<int> bone_count_vec(ai_mesh->mNumVertices, 0);
   std::vector<glm::mat4> inv_bind_pose_vec(node_vec.size(), glm::mat4(1.0f));
 
@@ -433,10 +441,8 @@ static std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
     }
   }
 
-  auto boneWeightsBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER,
-                                                          bone_weights_vec);
-  auto boneIndicesBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER,
-                                                          bone_indices_vec);
+  auto boneWeightsBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, bone_weights_vec);
+  auto boneIndicesBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, bone_indices_vec);
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
@@ -781,7 +787,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         }
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
                ai_node->mName.C_Str());
-        asset->mesh_vec.push_back(BuildBoneMesh(mesh, mat, node, buffers));
+        asset->mesh_vec.push_back(BuildBoneMesh(mesh, mat, node, buffers, image_vec));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
         if (iter == mesh_name_to_node_map.end()) {
@@ -789,7 +795,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
                  mesh->mName.C_Str());
           continue;
         }
-        asset->mesh_vec.push_back(BuildMesh(mesh, mat, iter->second, buffers));
+        asset->mesh_vec.push_back(BuildMesh(mesh, mat, iter->second, buffers, image_vec));
       }
     } else {
       Log::W("mesh \"%s\" skipped, HasPositions = %s, HasNormals = %s\n",

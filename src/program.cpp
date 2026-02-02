@@ -6,6 +6,7 @@
 #include "src/program.h"
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <sstream>

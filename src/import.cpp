@@ -778,15 +778,17 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
       auto buffers = ImportMeshBuffers(mesh);
       aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
       if (mesh->HasBones()) {
-        aiNode* ai_node = mesh->mBones[0]->mNode;
-        auto node = asset->FindNode(ai_node->mName.C_Str());
-        if (!node) {
-          Log::E("could not find node \"%s\" in asset map!\n",
-                 ai_node->mName.C_Str());
+        aiNode* armature = mesh->mBones[0]->mArmature;
+        if (!armature) {
+          Log::E("mesh \"%s\"has no armature", mesh->mName.C_Str());
           continue;
         }
-        Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(),
-               ai_node->mName.C_Str());
+        auto node = asset->FindNode(armature->mName.C_Str());
+        if (!node) {
+          Log::E("could not find armature \"%s\" in asset map!\n", armature->mName.C_Str());
+          continue;
+        }
+        Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), armature->mName.C_Str());
         asset->mesh_vec.push_back(BuildBoneMesh(mesh, mat, node, buffers, image_vec));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());

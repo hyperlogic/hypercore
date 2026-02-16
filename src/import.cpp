@@ -40,10 +40,11 @@
 #include "src/bonemesh.h"
 #include "src/image.h"
 #include "src/log.h"
-#include "src/material.h"
 #include "src/mesh.h"
 #include "src/program.h"
 #include "src/texture.h"
+#include "src/ubermaterial.h"
+#include "src/ubershader.h"
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
@@ -138,34 +139,25 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   return img;
 }
 
-static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material,
-                                               bool has_bones,
-                                               const std::vector<std::shared_ptr<Image>>& image_vec) {
+static std::shared_ptr<UberMaterial> BuildMaterial(
+    UberShaderCache& shader_cache,
+    const aiMaterial* material,
+    bool has_bones,
+    const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(material);
 
-  auto prog = std::make_shared<Program>();
   std::string mat_name = material->GetName().C_Str();
-  auto mat = std::make_shared<Material>(mat_name, prog);
 
-  std::string mat_info = "";
-
+  UberShaderVariantKey key = 0;
   if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-    mat_info += "#define HAS_TEXTURE\n";
+    key |= UberShaderVariantFlags::HAS_TEXTURE;
   }
-
-  prog->AddMacro("MATERIALINFO", mat_info);
-
   if (has_bones) {
-    if (!prog->LoadVertFrag("shader/bone_mesh_vert.glsl", "shader/bone_mesh_frag.glsl")) {
-      Log::E("Error loading bone mesh shader!\n");
-      return nullptr;
-    }
-  } else {
-    if (!prog->LoadVertFrag("shader/mesh_vert.glsl", "shader/mesh_frag.glsl")) {
-      Log::E("Error loading mesh shader!\n");
-      return nullptr;
-    }
+    key |= UberShaderVariantFlags::HAS_BONES;
   }
+
+  auto prog = shader_cache.GetOrCreate(key);
+  auto mat = std::make_shared<UberMaterial>(mat_name, prog);
 
   bool twosided = false;
   material->Get(AI_MATKEY_TWOSIDED, twosided);
@@ -178,7 +170,7 @@ static std::shared_ptr<Material> BuildMaterial(const aiMaterial* material,
 
   float opacity = 1.0f;
   material->Get(AI_MATKEY_OPACITY, opacity);
-  Material::Value val;
+  UberMaterial::Value val;
   val.f32[0] = opacity;
   mat->AddUniform(mat->prog()->GetUniformVar("opacity"), val);
 
@@ -357,12 +349,14 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
   return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer, indexBuffer);
 }
 
-static std::shared_ptr<Mesh> BuildMesh(const aiMesh* ai_mesh,
-                                       const aiMaterial* ai_mat,
-                                       std::shared_ptr<Node> node,
-                                       std::shared_ptr<MeshBuffers> buffers,
-                                       const std::vector<std::shared_ptr<Image>>& image_vec) {
-  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones(), image_vec);
+static std::shared_ptr<Mesh> BuildMesh(
+    UberShaderCache& shader_cache,
+    const aiMesh* ai_mesh,
+    const aiMaterial* ai_mat,
+    std::shared_ptr<Node> node,
+    std::shared_ptr<MeshBuffers> buffers,
+    const std::vector<std::shared_ptr<Image>>& image_vec) {
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), image_vec);
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
@@ -375,16 +369,18 @@ static std::shared_ptr<Mesh> BuildMesh(const aiMesh* ai_mesh,
   return std::make_shared<Mesh>(vao, mat, node);
 }
 
-static std::shared_ptr<Mesh> BuildBoneMesh(const aiMesh* ai_mesh,
-                                           const aiMaterial* ai_mat,
-                                           std::shared_ptr<Node> node,
-                                           std::shared_ptr<MeshBuffers> buffers,
-                                           const std::vector<std::shared_ptr<Image>>& image_vec) {
+static std::shared_ptr<Mesh> BuildBoneMesh(
+    UberShaderCache& shader_cache,
+    const aiMesh* ai_mesh,
+    const aiMaterial* ai_mat,
+    std::shared_ptr<Node> node,
+    std::shared_ptr<MeshBuffers> buffers,
+    const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(node);
   assert(ai_mesh->HasBones());
   assert(AI_LMW_MAX_WEIGHTS == 4);
 
-  auto mat = BuildMaterial(ai_mat, ai_mesh->HasBones(), image_vec);
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), image_vec);
 
   // the order of mBones array is NOT the same as the order of the nodes.
   // we use node_vec and name_to_idx_map to help re-order the indices.
@@ -771,6 +767,9 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
     image_vec.push_back(BuildTextureImage(scene->mTextures[i]));
   }
 
+  // TODO(AJT): share shader cache across all importers?
+  UberShaderCache shader_cache;
+
   asset->mesh_vec.reserve(scene->mNumMeshes);
   for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
     const aiMesh* mesh = scene->mMeshes[i];
@@ -789,7 +788,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
           continue;
         }
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), armature->mName.C_Str());
-        asset->mesh_vec.push_back(BuildBoneMesh(mesh, mat, node, buffers, image_vec));
+        asset->mesh_vec.push_back(BuildBoneMesh(shader_cache, mesh, mat, node, buffers, image_vec));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
         if (iter == mesh_name_to_node_map.end()) {
@@ -797,7 +796,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
                  mesh->mName.C_Str());
           continue;
         }
-        asset->mesh_vec.push_back(BuildMesh(mesh, mat, iter->second, buffers, image_vec));
+        asset->mesh_vec.push_back(BuildMesh(shader_cache, mesh, mat, iter->second, buffers, image_vec));
       }
     } else {
       Log::W("mesh \"%s\" skipped, HasPositions = %s, HasNormals = %s\n",

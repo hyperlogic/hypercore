@@ -11,9 +11,9 @@
 #include <glm/glm.hpp>
 
 #include "src/glincludes.h"
-#include "src/material.h"
 #include "src/program.h"
 #include "src/texture.h"
+#include "src/ubermaterial.h"
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
@@ -26,7 +26,7 @@ const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
 const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.3f);
 
 BoneMesh::BoneMesh(std::shared_ptr<VertexArrayObject> vao,
-                   std::shared_ptr<Material> mat,
+                   std::shared_ptr<UberMaterial> mat,
                    std::shared_ptr<Node> node,
                    std::vector<glm::mat4> inv_bind_pose_vec)
     : Mesh(vao, mat, node),

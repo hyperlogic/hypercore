@@ -1,0 +1,43 @@
+/*
+    Copyright (c) 2024 Anthony J. Thibault
+    This software is licensed under the MIT License. See LICENSE for more details.
+*/
+
+#include "src/ubershader.h"
+
+#include <memory>
+#include <string>
+
+#include "src/program.h"
+
+namespace hyper {
+
+UberShaderCache::UberShaderCache() {
+}
+UberShaderCache::~UberShaderCache() {
+}
+
+std::shared_ptr<Program> UberShaderCache::GetOrCreate(const UberShaderVariantKey key) {
+  auto iter = program_vec_.find(key);
+  if (iter == program_vec_.end()) {
+    // create program
+    auto prog = std::make_shared<Program>();
+    std::string mat_info;
+    if (key & UberShaderVariantFlags::HAS_BONES) {
+      mat_info += "#define HAS_BONES\n";
+    }
+    if (key & UberShaderVariantFlags::HAS_TEXTURE) {
+      mat_info += "#define HAS_TEXTURE\n";
+    }
+    prog->AddMacro("MATERIALINFO", mat_info);
+    if (!prog->LoadVertFrag("shader/uber_vert.glsl", "shader/uber_frag.glsl")) {
+      Log::E("Error loading uber shader! key = 0x%x\n", key);
+      return nullptr;
+    }
+    return prog;
+  } else {
+    return iter->second;
+  }
+}
+
+}  // namespace hyper

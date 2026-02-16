@@ -17,17 +17,17 @@ namespace hyper {
 
 class Texture;
 
-class Material {
+class UberMaterial {
  public:
   union Value {
     float f32[4];
     int32_t i32[4];
     uint32_t u32[4];
   };
-  Material(const std::string& name, std::shared_ptr<Program>& prog);
-  ~Material();
+  UberMaterial(const std::string& name, std::shared_ptr<Program>& prog);
+  ~UberMaterial();
 
-  DISABLE_COPY_AND_MOVE(Material);
+  DISABLE_COPY_AND_MOVE(UberMaterial);
 
   void AddUniform(const Program::Variable& var, const Value& val);
   void AddTexture(const std::shared_ptr<Texture>& texture);

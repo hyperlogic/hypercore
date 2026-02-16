@@ -1,9 +1,9 @@
 /*
-    Copyright (c) 2024 Anthony J. Thibault
+    Copyright (c) 2026 Anthony J. Thibault
     This software is licensed under the MIT License. See LICENSE for more details.
 */
 
-#include "src/material.h"
+#include "src/ubermaterial.h"
 
 #include <memory>
 #include <string>
@@ -15,23 +15,23 @@
 
 namespace hyper {
 
-Material::Material(const std::string& name, std::shared_ptr<Program>& prog) {
+UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog) {
   name_ = name;
   prog_ = prog;
 }
 
-Material::~Material() {
+UberMaterial::~UberMaterial() {
 }
 
-void Material::AddUniform(const Program::Variable& var, const Value& val) {
+void UberMaterial::AddUniform(const Program::Variable& var, const Value& val) {
   uniforms_.push_back(std::pair(var, val));
 }
 
-void Material::AddTexture(const std::shared_ptr<Texture>& texture) {
+void UberMaterial::AddTexture(const std::shared_ptr<Texture>& texture) {
   textures_.push_back(texture);
 }
 
-void Material::Bind() const {
+void UberMaterial::Bind() const {
   prog_->Bind();
   for (auto& pair : uniforms_) {
     auto& var = pair.first;

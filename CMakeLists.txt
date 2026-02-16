@@ -135,11 +135,12 @@ add_library(hypercore STATIC
     src/inputbuddy.cpp
     src/log.cpp
     src/node.cpp
-    src/material.cpp
     src/mesh.cpp
     src/program.cpp
     src/sdl_main.cpp
     src/texture.cpp
+    src/ubermaterial.cpp
+    src/ubershader.cpp
     src/util.cpp
     src/vertexbuffer.cpp
     src/textrenderer.cpp

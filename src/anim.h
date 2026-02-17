@@ -13,8 +13,7 @@ namespace hyper {
 
 class Anim {
  public:
-  Anim(const std::string& name_in, size_t num_frames_in,
-       size_t num_joints_in, float fps);
+  Anim(const std::string& name_in, size_t num_frames_in, size_t num_joints_in, float fps);
   void SetKey(size_t frame, size_t joint, const glm::mat4& value);
   const glm::mat4& GetKey(size_t frame, size_t joint) const;
   const std::string& name() const { return name_; }

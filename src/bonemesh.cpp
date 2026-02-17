@@ -23,7 +23,7 @@ namespace hyper {
 
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
 const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
-const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.3f);
+const glm::vec3 kAmbientColor(0.1f, 0.1f, 0.1f);
 
 BoneMesh::BoneMesh(std::shared_ptr<VertexArrayObject> vao,
                    std::shared_ptr<UberMaterial> mat,
@@ -54,8 +54,9 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   mat_->Bind();
   mat_->prog()->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
   mat_->prog()->SetUniform("normalModelMat", normal_model_mat);
-  mat_->prog()->SetUniform("lightDir", glm::normalize(kLightDir));
-  mat_->prog()->SetUniform("lightColor", kLightColor);
+  mat_->prog()->SetUniform("light_direct_dir", glm::normalize(kLightDir));
+  mat_->prog()->SetUniform("light_direct_color", kLightColor);
+  mat_->prog()->SetUniform("light_ambient_color", kAmbientColor);
   mat_->prog()->SetUniform("boneMats[0]", abs_xform_vec_);
 
   vao_->DrawElements(GL_TRIANGLES);

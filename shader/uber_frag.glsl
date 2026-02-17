@@ -14,10 +14,10 @@
 uniform sampler2D colorTex;
 #endif
 
-uniform vec3 lightDir;
-uniform vec3 lightColor;
+uniform vec3 light_direct_dir;
+uniform vec3 light_direct_color;
+uniform vec3 light_ambient_color;
 
-uniform vec3 color_ambient;
 uniform vec3 color_diffuse;
 uniform float opacity;
 
@@ -31,18 +31,18 @@ out vec4 out_color;
 
 void main() {
   vec3 n = normalize(frag_normal);
-  float ndotl = max(dot(n, lightDir), 0.0);
-  vec3 diffuse = ndotl * lightColor * color_diffuse;
+  float ndotl = max(dot(n, light_direct_dir), 0.0);
+  vec3 diffuse = ndotl * light_direct_color * color_diffuse;
 
 #ifdef HAS_TEXTURE
   vec4 diffuse_tex_color = texture(colorTex, frag_uv);
-  vec3 final_color = (color_ambient + diffuse) * diffuse_tex_color.rgb;
+  vec3 final_color = (light_ambient_color + diffuse) * diffuse_tex_color.rgb;
   // premultiplied alpha blending
   float alpha = diffuse_tex_color.a * opacity;
   out_color.rgb = alpha * final_color;
   out_color.a = alpha;
 #else
-  vec3 final_color = color_ambient + diffuse;
+  vec3 final_color = light_ambient_color + diffuse;
   // premultiplied alpha blending
   float alpha = opacity;
   out_color.rgb = alpha * final_color;

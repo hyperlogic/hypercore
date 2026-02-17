@@ -181,13 +181,6 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   val.f32[2] = color_diffuse.b;
   mat->AddUniform(mat->prog()->GetUniformVar("color_diffuse"), val);
 
-  aiColor3D color_ambient(0.0f, 0.0f, 0.0f);
-  material->Get(AI_MATKEY_COLOR_DIFFUSE, color_ambient);
-  val.f32[0] = color_ambient.r;
-  val.f32[1] = color_ambient.g;
-  val.f32[2] = color_ambient.b;
-  mat->AddUniform(mat->prog()->GetUniformVar("color_ambient"), val);
-
   aiColor3D color_specular(0.0f, 0.0f, 0.0f);
   material->Get(AI_MATKEY_COLOR_SPECULAR, color_specular);
 

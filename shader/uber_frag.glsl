@@ -10,42 +10,121 @@
 /*%%HEADER%%*/
 /*%%MATERIALINFO%%*/
 
+const float M_PI = 3.141592653589793;
+
 #ifdef HAS_TEXTURE
-uniform sampler2D colorTex;
+uniform sampler2D base_color_tex;
 #endif
+
+uniform vec3 camera_pos;
 
 uniform vec3 light_direct_dir;
 uniform vec3 light_direct_color;
 uniform vec3 light_ambient_color;
 
-uniform vec3 color_diffuse;
-uniform float opacity;
+uniform vec4 base_color_factor;
+uniform float metallic_factor;
+uniform float roughness_factor;
 
 #ifdef HAS_TEXTURE
 in vec2 frag_uv;
 #endif
 
+in vec3 frag_position;
 in vec3 frag_normal;
 
 out vec4 out_color;
 
+float ClampedDot(vec3 x, vec3 y) {
+    return clamp(dot(x, y), 0.0, 1.0);
+}
+
+// Smith Joint GGX
+// Note: Vis = G / (4 * NdotL * NdotV)
+// see Eric Heitz. 2014. Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs. Journal of Computer Graphics Techniques, 3
+// see Real-Time Rendering. Page 331 to 336.
+// see https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/geometricshadowing(specularg)
+float V_GGX(float NdotL, float NdotV, float alphaRoughness) {
+    float alphaRoughnessSq = alphaRoughness * alphaRoughness;
+    float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0 - alphaRoughnessSq) + alphaRoughnessSq);
+    float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0 - alphaRoughnessSq) + alphaRoughnessSq);
+    float GGX = GGXV + GGXL;
+    if (GGX > 0.0) {
+        return 0.5 / GGX;
+    }
+    return 0.0;
+}
+
+
+// The following equation(s) model the distribution of microfacet normals across the area being drawn (aka D())
+// Implementation from "Average Irregularity Representation of a Roughened Surface for Ray Reflection" by T. S. Trowbridge, and K. P. Reitz
+// Follows the distribution function recommended in the SIGGRAPH 2013 course notes from EPIC Games [1], Equation 3.
+float D_GGX(float NdotH, float alphaRoughness) {
+    float alphaRoughnessSq = alphaRoughness * alphaRoughness;
+    float f = (NdotH * NdotH) * (alphaRoughnessSq - 1.0) + 1.0;
+    return alphaRoughnessSq / (M_PI * f * f);
+}
+
+// The following equation models the Fresnel reflectance term of the spec equation (aka F())
+// Implementation of fresnel from [4], Equation 15
+vec3 F_Schlick(vec3 f0, vec3 f90, float VdotH) {
+    return f0 + (f90 - f0) * pow(clamp(1.0 - VdotH, 0.0, 1.0), 5.0);
+}
+
+//  https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#acknowledgments AppendixB
+vec3 BRDF_specularGGX(float alphaRoughness, float NdotL, float NdotV, float NdotH) {
+    float Vis = V_GGX(NdotL, NdotV, alphaRoughness);
+    float D = D_GGX(NdotH, alphaRoughness);
+    return vec3(Vis * D);
+}
+
+//https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#acknowledgments AppendixB
+vec3 BRDF_lambertian(vec3 diffuseColor) {
+    // see https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
+    return (diffuseColor / M_PI);
+}
+
 void main() {
+  vec3 v = normalize(camera_pos - frag_position);
   vec3 n = normalize(frag_normal);
-  float ndotl = max(dot(n, light_direct_dir), 0.0);
-  vec3 diffuse = ndotl * light_direct_color * color_diffuse;
+  vec3 l = light_direct_dir;
+  vec3 h = normalize(l + v);
+
+  float ndotv = ClampedDot(n, v);
+  float ndotl = ClampedDot(n, l);
+  float ndoth = ClampedDot(n, h);
+  float vdoth = ClampedDot(v, h);
+
+  float lightIntensity = 4.0;
 
 #ifdef HAS_TEXTURE
-  vec4 diffuse_tex_color = texture(colorTex, frag_uv);
-  vec3 final_color = (light_ambient_color + diffuse) * diffuse_tex_color.rgb;
-  // premultiplied alpha blending
-  float alpha = diffuse_tex_color.a * opacity;
-  out_color.rgb = alpha * final_color;
-  out_color.a = alpha;
+  vec4 base_color = texture(base_color_tex, frag_uv) * base_color_factor;
 #else
-  vec3 final_color = light_ambient_color + diffuse;
-  // premultiplied alpha blending
-  float alpha = opacity;
-  out_color.rgb = alpha * final_color;
-  out_color.a = alpha;
+  vec4 base_color = base_color_factor;
 #endif
+
+  vec3 l_diffuse = lightIntensity * light_direct_color * ndotl * BRDF_lambertian(base_color.rgb);
+
+  vec3 f0_dielectric = vec3(0.04);
+  vec3 f90_dielectric = vec3(1.0);
+  vec3 dielectric_fresnel = F_Schlick(f0_dielectric, f90_dielectric, abs(vdoth));
+  vec3 metal_fresnel = F_Schlick(base_color.rgb, vec3(1.0), abs(vdoth));
+
+  vec3 l_specular_dielectric = vec3(0.0);
+  vec3 l_specular_metal = vec3(0.0);
+
+  float alpha_roughness = roughness_factor * roughness_factor;
+  l_specular_metal = lightIntensity * ndotl * BRDF_specularGGX(alpha_roughness, ndotl, ndotv, ndoth);
+  l_specular_dielectric = l_specular_metal;
+
+  vec3 l_metal_brdf = metal_fresnel * l_specular_metal;
+  vec3 l_dielectric_brdf = mix(l_diffuse, l_specular_dielectric, dielectric_fresnel);
+
+  vec3 l_color = mix(l_dielectric_brdf, l_metal_brdf, metallic_factor);
+
+  vec3 final_color = light_ambient_color + l_color;
+
+  // premultiplied alpha blending
+  out_color.rgb = base_color.a * final_color;
+  out_color.a = base_color.a;
 }

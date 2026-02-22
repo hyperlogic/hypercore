@@ -148,97 +148,100 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
 
   std::string mat_name = material->GetName().C_Str();
 
-  UberShaderVariantKey key = 0;
-  if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-    key |= UberShaderVariantFlags::HAS_TEXTURE;
-  }
-  if (has_bones) {
-    key |= UberShaderVariantFlags::HAS_BONES;
-  }
-
-  auto prog = shader_cache.GetOrCreate(key);
-  auto mat = std::make_shared<UberMaterial>(mat_name, prog);
-
-  bool twosided = false;
-  material->Get(AI_MATKEY_TWOSIDED, twosided);
-
   int32_t shading_model = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
+  if (shading_model == aiShadingMode_PBR_BRDF) {
+    UberShaderVariantKey key = 0;
+    if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+      key |= UberShaderVariantFlags::HAS_TEXTURE;
+    }
+    if (has_bones) {
+      key |= UberShaderVariantFlags::HAS_BONES;
+    }
+    auto prog = shader_cache.GetOrCreate(key);
+    auto mat = std::make_shared<UberMaterial>(mat_name, prog);
 
-  bool enable_wireframe = false;
-  material->Get(AI_MATKEY_ENABLE_WIREFRAME, enable_wireframe);
+    float opacity = 1.0f;
+    material->Get(AI_MATKEY_OPACITY, opacity);
 
-  float opacity = 1.0f;
-  material->Get(AI_MATKEY_OPACITY, opacity);
-  UberMaterial::Value val;
-  val.f32[0] = opacity;
-  mat->AddUniform(mat->prog()->GetUniformVar("opacity"), val);
+    aiColor3D base_color_factor(1.0f, 1.0f, 1.0f);
+    material->Get(AI_MATKEY_BASE_COLOR, base_color_factor);
+    glm::vec4 v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
+    mat->SetBaseColorFactor(v4);
 
-  aiColor3D color_diffuse(1.0f, 1.0f, 1.0f);
-  material->Get(AI_MATKEY_COLOR_DIFFUSE, color_diffuse);
-  val.f32[0] = color_diffuse.r;
-  val.f32[1] = color_diffuse.g;
-  val.f32[2] = color_diffuse.b;
-  mat->AddUniform(mat->prog()->GetUniformVar("color_diffuse"), val);
-
-  aiColor3D color_specular(0.0f, 0.0f, 0.0f);
-  material->Get(AI_MATKEY_COLOR_SPECULAR, color_specular);
-
-  aiColor3D color_emissive(0.0f, 0.0f, 0.0f);
-  material->Get(AI_MATKEY_COLOR_SPECULAR, color_emissive);
-
-  if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-    bool found_image = false;
-    aiString path;
-    aiTextureMapping mapping;
-    if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping) > 0) {
-      Log::W("Failed to find diffuse texture in material \"%s\"\n", mat_name.c_str());
-    } else {
-      // TODO(AJT): load from mapping
-      Texture::Params texParams = {
-        FilterType::LinearMipmapLinear,
-        FilterType::Linear,
-        WrapType::Repeat,
-        WrapType::Repeat
-      };
-      if (path.data[0] == '*') {
-        int idx = std::atoi(path.data + 1);
-        auto tex = std::make_shared<Texture>(*image_vec[idx], texParams);
-        mat->AddTexture(tex);
-        found_image = true;
+    if (material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
+      bool found_image = false;
+      aiString path;
+      aiTextureMapping mapping;
+      if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &path, &mapping) > 0) {
+        Log::W("Failed to find base_color texture in material \"%s\"\n", mat_name.c_str());
       } else {
-        for (auto& img : image_vec) {
-          if (img->filename == path.data) {
-            auto tex = std::make_shared<Texture>(*img, texParams);
-            mat->AddTexture(tex);
-            found_image = true;
+        // TODO(AJT): load from mapping
+        Texture::Params texParams = {
+          FilterType::LinearMipmapLinear,
+          FilterType::Linear,
+          WrapType::Repeat,
+          WrapType::Repeat
+        };
+        if (path.data[0] == '*') {
+          int idx = std::atoi(path.data + 1);
+          auto tex = std::make_shared<Texture>(*image_vec[idx], texParams);
+          mat->AddTexture(tex);
+          found_image = true;
+        } else {
+          for (auto& img : image_vec) {
+            if (img->filename == path.data) {
+              auto tex = std::make_shared<Texture>(*img, texParams);
+              mat->AddTexture(tex);
+              found_image = true;
+            }
           }
         }
+        if (!found_image) {
+          Log::W("Failed to find diffuse texture \"%s\" in material \"%s\"\n", path.data, mat_name.c_str());
+        }
       }
+
       if (!found_image) {
-        Log::W("Failed to find diffuse texture \"%s\" in material \"%s\"\n", path.data, mat_name.c_str());
+        Image img;
+        if (!img.Load("texture/checkerboard.png")) {
+          Log::E("Error loading checkerboard.png\n");
+          return nullptr;
+        }
+        img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
+        Texture::Params texParams = {
+          FilterType::LinearMipmapLinear,
+          FilterType::Linear,
+          WrapType::Repeat,
+          WrapType::Repeat
+        };
+        auto tex = std::make_shared<Texture>(img, texParams);
+        mat->AddTexture(tex);
       }
     }
 
-    if (!found_image) {
-      Image img;
-      if (!img.Load("texture/checkerboard.png")) {
-        Log::E("Error loading checkerboard.png\n");
-        return nullptr;
-      }
-      img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
-      Texture::Params texParams = {
-        FilterType::LinearMipmapLinear,
-        FilterType::Linear,
-        WrapType::Repeat,
-        WrapType::Repeat
-      };
-      auto tex = std::make_shared<Texture>(img, texParams);
-      mat->AddTexture(tex);
+    float metallic_factor(0.0f);
+    material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
+    mat->SetMetallicFactor(metallic_factor);
+
+    float roughness_factor(1.0f);
+    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+    mat->SetRoughnessFactor(roughness_factor);
+
+    return mat;
+  } else {
+    Log::W("unsupported shading model = %d\n");
+
+    UberShaderVariantKey key = 0;
+    if (has_bones) {
+      key |= UberShaderVariantFlags::HAS_BONES;
     }
+    auto prog = shader_cache.GetOrCreate(key);
+    auto mat = std::make_shared<UberMaterial>(mat_name, prog);
+
+    mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    return mat;
   }
-
-  return mat;
 }
 
 static std::shared_ptr<Node> BuildNodeTree(

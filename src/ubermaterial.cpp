@@ -11,20 +11,46 @@
 #include <glm/glm.hpp>
 
 #include "src/glincludes.h"
+#include "src/program.h"
 #include "src/texture.h"
+
 
 namespace hyper {
 
 UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog) {
   name_ = name;
   prog_ = prog;
+
+  base_color_factor_ = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 UberMaterial::~UberMaterial() {
 }
 
-void UberMaterial::AddUniform(const Program::Variable& var, const Value& val) {
-  uniforms_.push_back(std::pair(var, val));
+void UberMaterial::SetBaseColorFactor(glm::vec4 base_color_factor) {
+  Value val;
+  val.f32[0] = base_color_factor.x;
+  val.f32[1] = base_color_factor.y;
+  val.f32[2] = base_color_factor.z;
+  val.f32[3] = base_color_factor.w;
+  SetUniform("base_color_factor", val);
+}
+
+void UberMaterial::SetMetallicFactor(float metallic_factor) {
+  Value val;
+  val.f32[0] = metallic_factor;
+  SetUniform("metallic_factor", val);
+}
+
+void UberMaterial::SetRoughnessFactor(float roughness_factor) {
+  Value val;
+  val.f32[0] = roughness_factor;
+  SetUniform("roughness_factor", val);
+}
+
+void UberMaterial::SetUniform(const std::string& name, const Value& val) {
+  Program::Variable var = prog_->GetUniformVar(name);
+  uniforms_[name] = std::pair(var, val);
 }
 
 void UberMaterial::AddTexture(const std::shared_ptr<Texture>& texture) {
@@ -34,9 +60,9 @@ void UberMaterial::AddTexture(const std::shared_ptr<Texture>& texture) {
 void UberMaterial::Bind() const {
   prog_->Bind();
   for (auto& pair : uniforms_) {
-    auto& var = pair.first;
-    auto& val = pair.second;
-    switch (pair.first.type) {
+    auto& var = pair.second.first;
+    auto& val = pair.second.second;
+    switch (var.type) {
       case GL_FLOAT:
         prog_->SetUniformRaw(var.loc, val.f32[0]);
         break;

@@ -18,8 +18,8 @@
 namespace hyper {
 
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
-const glm::vec3 kLightColor(1.0f, 0.9f, 0.9f);
-const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.3f);
+const glm::vec3 kLightColor(1.0f, 1.0f, 1.0f);
+const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.2f);
 
 Mesh::Mesh(std::shared_ptr<VertexArrayObject> vao,
            std::shared_ptr<UberMaterial> mat,
@@ -29,15 +29,19 @@ Mesh::Mesh(std::shared_ptr<VertexArrayObject> vao,
 
 void Mesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
                   const glm::vec4& viewport, const glm::vec2& near_far) {
-  glm::mat4 xform = node_->abs_xform();
+  glm::mat4 model_mat = node_->abs_xform();
+  glm::mat4 view_mat = glm::inverse(camera_mat);
+  glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
+  glm::vec3 camera_pos = glm::vec3(camera_mat[3]);
 
   mat_->Bind();
 
-  glm::mat4 model_view_mat = glm::inverse(camera_mat) * xform;
-  glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(xform)));
+  mat_->prog()->SetUniform("camera_pos", camera_pos);
+  mat_->prog()->SetUniform("model_mat", model_mat);
+  mat_->prog()->SetUniform("view_mat", view_mat);
+  mat_->prog()->SetUniform("proj_mat", proj_mat);
+  mat_->prog()->SetUniform("normal_model_mat", normal_model_mat);
 
-  mat_->prog()->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
-  mat_->prog()->SetUniform("normalModelMat", normal_model_mat);
   mat_->prog()->SetUniform("light_direct_dir", glm::normalize(kLightDir));
   mat_->prog()->SetUniform("light_direct_color", kLightColor);
   mat_->prog()->SetUniform("light_ambient_color", kAmbientColor);

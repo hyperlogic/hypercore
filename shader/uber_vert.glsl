@@ -10,8 +10,10 @@
 /*%%HEADER%%*/
 /*%%MATERIALINFO%%*/
 
-uniform mat4 modelViewProjMat;
-uniform mat3 normalModelMat;
+uniform mat4 model_mat;
+uniform mat4 view_mat;
+uniform mat4 proj_mat;
+uniform mat3 normal_model_mat;
 
 #ifdef HAS_BONES
 #define MAX_BONES 200
@@ -30,7 +32,8 @@ out vec2 frag_uv;
 
 in vec3 normal;
 
-out vec3 frag_normal;
+out vec3 frag_position;  // world space
+out vec3 frag_normal;  // world space
 
 void main(void) {
 #ifdef HAS_BONES
@@ -43,11 +46,13 @@ void main(void) {
 		skinnedPosition += boneWeights[i] * (boneMat * position);
 		skinnedNormal += boneWeights[i] * (mat3(boneMat) * normal);
 	}
-  gl_Position = modelViewProjMat * skinnedPosition;
-  frag_normal = normalize(normalModelMat * skinnedNormal);
+  gl_Position = proj_mat * view_mat * model_mat * skinnedPosition;
+	frag_position = (model_mat * skinnedPosition).xyz;
+  frag_normal = normalize(normal_model_mat * skinnedNormal);
 #else
-  gl_Position = modelViewProjMat * position;
-  frag_normal = normalize(normalModelMat * normal);
+  gl_Position = proj_mat * view_mat * model_mat * position;
+	frag_position = (model_mat * position).xyz;
+  frag_normal = normalize(normal_model_mat * normal);
 #endif
 
 #ifdef HAS_TEXTURE

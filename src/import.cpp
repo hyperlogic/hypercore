@@ -139,6 +139,57 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   return img;
 }
 
+static std::shared_ptr<Texture> LoadTextureFromMat(const aiMaterial* material, aiTextureType texture_type,
+                                                   const std::vector<std::shared_ptr<Image>>& image_vec) {
+  assert(material);
+  if (material->GetTextureCount(texture_type) > 0) {
+    bool found_image = false;
+    aiString path;
+    aiTextureMapping mapping;
+    if (material->GetTexture(texture_type, 0, &path, &mapping) > 0) {
+      Log::W("Failed to find texture_type %d in material \"%s\"\n",
+             texture_type, material->GetName().C_Str());
+    } else {
+      // TODO(AJT): load from mapping
+      Texture::Params tex_params = {
+        FilterType::LinearMipmapLinear,
+        FilterType::Linear,
+        WrapType::Repeat,
+        WrapType::Repeat
+      };
+      if (path.data[0] == '*') {
+        int idx = std::atoi(path.data + 1);
+        return std::make_shared<Texture>(*image_vec[idx], tex_params);
+      } else {
+        for (auto& img : image_vec) {
+          if (img->filename == path.data) {
+            return std::make_shared<Texture>(*img, tex_params);
+          }
+        }
+      }
+    }
+
+    if (!found_image) {
+      Log::W("Failed to find texture (%d) \"%s\" in material \"%s\", fallback to checkerboard.\n",
+             texture_type, path.C_Str(), material->GetName().C_Str());
+      Image img;
+      if (!img.Load("texture/checkerboard.png")) {
+        Log::E("Error loading checkerboard.png\n");
+        return nullptr;
+      }
+      img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
+      Texture::Params tex_params = {
+        FilterType::LinearMipmapLinear,
+        FilterType::Linear,
+        WrapType::Repeat,
+        WrapType::Repeat
+      };
+      return std::make_shared<Texture>(img, tex_params);
+    }
+  }
+  return nullptr;
+}
+
 static std::shared_ptr<UberMaterial> BuildMaterial(
     UberShaderCache& shader_cache,
     const aiMaterial* material,
@@ -151,9 +202,17 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   int32_t shading_model = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
   if (shading_model == aiShadingMode_PBR_BRDF) {
+    auto base_color_tex = LoadTextureFromMat(material, aiTextureType_BASE_COLOR, image_vec);
+    auto emissive_color_tex = LoadTextureFromMat(material, aiTextureType_EMISSIVE, image_vec);
+
     UberShaderVariantKey key = 0;
-    if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-      key |= UberShaderVariantFlags::HAS_TEXTURE;
+    if (base_color_tex) {
+      key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
+      key |= UberShaderVariantFlags::HAS_UV0;
+    }
+    if (emissive_color_tex) {
+      key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
+      key |= UberShaderVariantFlags::HAS_UV0;
     }
     if (has_bones) {
       key |= UberShaderVariantFlags::HAS_BONES;
@@ -169,55 +228,8 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     glm::vec4 v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
     mat->SetBaseColorFactor(v4);
 
-    if (material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
-      bool found_image = false;
-      aiString path;
-      aiTextureMapping mapping;
-      if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &path, &mapping) > 0) {
-        Log::W("Failed to find base_color texture in material \"%s\"\n", mat_name.c_str());
-      } else {
-        // TODO(AJT): load from mapping
-        Texture::Params texParams = {
-          FilterType::LinearMipmapLinear,
-          FilterType::Linear,
-          WrapType::Repeat,
-          WrapType::Repeat
-        };
-        if (path.data[0] == '*') {
-          int idx = std::atoi(path.data + 1);
-          auto tex = std::make_shared<Texture>(*image_vec[idx], texParams);
-          mat->SetBaseColorTexture(tex);
-          found_image = true;
-        } else {
-          for (auto& img : image_vec) {
-            if (img->filename == path.data) {
-              auto tex = std::make_shared<Texture>(*img, texParams);
-              mat->SetBaseColorTexture(tex);
-              found_image = true;
-            }
-          }
-        }
-        if (!found_image) {
-          Log::W("Failed to find diffuse texture \"%s\" in material \"%s\"\n", path.data, mat_name.c_str());
-        }
-      }
-
-      if (!found_image) {
-        Image img;
-        if (!img.Load("texture/checkerboard.png")) {
-          Log::E("Error loading checkerboard.png\n");
-          return nullptr;
-        }
-        img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
-        Texture::Params texParams = {
-          FilterType::LinearMipmapLinear,
-          FilterType::Linear,
-          WrapType::Repeat,
-          WrapType::Repeat
-        };
-        auto tex = std::make_shared<Texture>(img, texParams);
-        mat->SetBaseColorTexture(tex);
-      }
+    if (base_color_tex) {
+      mat->SetBaseColorTexture(base_color_tex);
     }
 
     float metallic_factor(0.0f);
@@ -227,6 +239,15 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     float roughness_factor(1.0f);
     material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
     mat->SetRoughnessFactor(roughness_factor);
+
+    aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
+    material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
+    glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
+    mat->SetEmissiveColorFactor(v3);
+
+    if (emissive_color_tex) {
+      mat->SetEmissiveColorTexture(emissive_color_tex);
+    }
 
     return mat;
   } else {
@@ -240,6 +261,8 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     auto mat = std::make_shared<UberMaterial>(mat_name, prog);
 
     mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    mat->SetEmissiveColorFactor(glm::vec3(1.0f, 1.0f, 1.0f));
+
     return mat;
   }
 }
@@ -357,8 +380,8 @@ static std::shared_ptr<Mesh> BuildMesh(
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
-  if (mat->HasBaseColorTexture()) {
-    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
+  if (mat->HasBaseColorTexture() || mat->HasEmissiveColorTexture()) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv0"), buffers->uvBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
   vao->SetElementBuffer(buffers->indexBuffer);
@@ -439,8 +462,8 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
-  if (mat->HasBaseColorTexture()) {
-    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
+  if (mat->HasBaseColorTexture() || mat->HasEmissiveColorTexture()) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv0"), buffers->uvBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("boneWeights"), boneWeightsBuffer);

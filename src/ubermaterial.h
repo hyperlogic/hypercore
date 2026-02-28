@@ -37,29 +37,39 @@ class UberMaterial {
   const std::shared_ptr<Program>& prog() const { return prog_; }
   const std::string& name() const { return name_; }
 
-  void SetBaseColorFactor(glm::vec4 base_color_factor);
+  void SetBaseColorFactor(glm::vec4 base_color_factor) { base_color_factor_ = base_color_factor; }
   glm::vec4 GetBaseColorFactor() const { return base_color_factor_; }
-  void SetBaseColorTexture(const std::shared_ptr<Texture>& texture);
+
+  void SetBaseColorTexture(const std::shared_ptr<Texture>& texture) { base_color_tex_ = texture; }
   bool HasBaseColorTexture() const { return base_color_tex_ != nullptr; }
 
-  void SetMetallicFactor(float metallic_factor);
+  void SetMetallicFactor(float metallic_factor) { metallic_factor_ = metallic_factor; }
   float GetMetallicFactor() const { return metallic_factor_; }
 
-  void SetRoughnessFactor(float roughness_factor);
+  void SetRoughnessFactor(float roughness_factor) { roughness_factor_ = roughness_factor; }
   float GetRoughnessFactor() const { return roughness_factor_; }
 
- protected:
-  void SetUniform(const std::string& name, const Value& val);
+  void SetEmissiveColorFactor(glm::vec3 emissive_color_factor) { emissive_color_factor_ = emissive_color_factor; }
+  glm::vec3 GetEmissiveColorFactor() const { return emissive_color_factor_; }
 
+  void SetEmissiveColorTexture(const std::shared_ptr<Texture>& texture) { emissive_color_tex_ = texture; }
+  bool HasEmissiveColorTexture() const { return emissive_color_tex_ != nullptr; }
+
+ protected:
   std::string name_;
   std::shared_ptr<Program> prog_;
   std::unordered_map<std::string, std::pair<Program::Variable, Value>> uniforms_;
 
   glm::vec4 base_color_factor_;
   std::shared_ptr<Texture> base_color_tex_;
+  int base_color_uv_;
 
   float metallic_factor_;
   float roughness_factor_;
+
+  glm::vec3 emissive_color_factor_;
+  std::shared_ptr<Texture> emissive_color_tex_;
+  int emissive_color_uv_;
 };
 
 }  // namespace hyper

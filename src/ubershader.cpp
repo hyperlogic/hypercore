@@ -26,8 +26,17 @@ std::shared_ptr<Program> UberShaderCache::GetOrCreate(const UberShaderVariantKey
     if (key & UberShaderVariantFlags::HAS_BONES) {
       mat_info += "#define HAS_BONES\n";
     }
-    if (key & UberShaderVariantFlags::HAS_TEXTURE) {
-      mat_info += "#define HAS_TEXTURE\n";
+    if (key & UberShaderVariantFlags::HAS_BASE_TEXTURE) {
+      mat_info += "#define HAS_BASE_TEXTURE\n";
+    }
+    if (key & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE) {
+      mat_info += "#define HAS_EMISSIVE_TEXTURE\n";
+    }
+    if (key & UberShaderVariantFlags::HAS_UV0) {
+      mat_info += "#define HAS_UV0\n";
+    }
+    if (key & UberShaderVariantFlags::HAS_UV1) {
+      mat_info += "#define HAS_UV1\n";
     }
     prog->AddMacro("MATERIALINFO", mat_info);
     if (!prog->LoadVertFrag("shader/uber_vert.glsl", "shader/uber_frag.glsl")) {

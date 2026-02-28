@@ -25,9 +25,14 @@ in vec4 boneIndices;
 
 in vec4 position;
 
-#ifdef HAS_TEXTURE
-in vec2 uv;
-out vec2 frag_uv;
+#ifdef HAS_UV0
+in vec2 uv0;
+out vec2 frag_uv0;
+#endif
+
+#ifdef HAS_UV1
+in vec2 uv1;
+out vec2 frag_uv1;
 #endif
 
 in vec3 normal;
@@ -55,7 +60,11 @@ void main(void) {
   frag_normal = normalize(normal_model_mat * normal);
 #endif
 
-#ifdef HAS_TEXTURE
-  frag_uv = uv;
+#ifdef HAS_UV0
+  frag_uv0 = uv0;
+#endif
+
+#ifdef HAS_UV1
+  frag_uv1 = uv1;
 #endif
 }

@@ -17,82 +17,45 @@
 
 namespace hyper {
 
-UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog) {
-  name_ = name;
-  prog_ = prog;
-
-  base_color_factor_ = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog)
+    : name_(name),
+      prog_(prog),
+      base_color_factor_(1.0f, 1.0f, 1.0f, 1.0f),
+      base_color_tex_(),
+      base_color_uv_(0),
+      metallic_factor_(1.0f),
+      roughness_factor_(1.0f),
+      emissive_color_factor_(0.0f, 0.0f, 0.0f),
+      emissive_color_uv_() {
 }
 
 UberMaterial::~UberMaterial() {
 }
 
-void UberMaterial::SetBaseColorFactor(glm::vec4 base_color_factor) {
-  Value val;
-  val.f32[0] = base_color_factor.x;
-  val.f32[1] = base_color_factor.y;
-  val.f32[2] = base_color_factor.z;
-  val.f32[3] = base_color_factor.w;
-  SetUniform("base_color_factor", val);
-}
-
-void UberMaterial::SetBaseColorTexture(const std::shared_ptr<Texture>& texture) {
-  base_color_tex_ = texture;
-}
-
-void UberMaterial::SetMetallicFactor(float metallic_factor) {
-  Value val;
-  val.f32[0] = metallic_factor;
-  SetUniform("metallic_factor", val);
-}
-
-void UberMaterial::SetRoughnessFactor(float roughness_factor) {
-  Value val;
-  val.f32[0] = roughness_factor;
-  SetUniform("roughness_factor", val);
-}
-
 void UberMaterial::Bind() const {
   prog_->Bind();
-  for (auto& pair : uniforms_) {
-    auto& var = pair.second.first;
-    auto& val = pair.second.second;
-    switch (var.type) {
-      case GL_FLOAT:
-        prog_->SetUniformRaw(var.loc, val.f32[0]);
-        break;
-      case GL_FLOAT_VEC2:
-        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec2&>(val.f32));
-        break;
-      case GL_FLOAT_VEC3:
-        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec3&>(val.f32));
-        break;
-      case GL_FLOAT_VEC4:
-        prog_->SetUniformRaw(var.loc, reinterpret_cast<const glm::vec4&>(val.f32));
-        break;
-      case GL_INT:
-        prog_->SetUniformRaw(var.loc, val.i32[0]);
-        break;
-      case GL_UNSIGNED_INT:
-        prog_->SetUniformRaw(var.loc, val.u32[0]);
-        break;
-      default:
-        // just support basic types for now.
-        Log::W("Illegal type %d for material %s!\n", name_.c_str());
-        break;
-    }
-  }
+
+  // TODO(AJT): cache the uniform locs..
+  prog_->SetUniform("base_color_factor", base_color_factor_);
 
   if (base_color_tex_) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, base_color_tex_->texture);
     prog_->SetUniform("base_color_tex", 0);
+    prog_->SetUniform("base_color_uv", base_color_uv_);
   }
-}
 
-void UberMaterial::SetUniform(const std::string& name, const Value& val) {
-  Program::Variable var = prog_->GetUniformVar(name);
-  uniforms_[name] = std::pair(var, val);
+  prog_->SetUniform("metallic_factor", metallic_factor_);
+  prog_->SetUniform("roughness_factor", roughness_factor_);
+
+  prog_->SetUniform("emissive_color_factor", emissive_color_factor_);
+
+  if (emissive_color_tex_) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, emissive_color_tex_->texture);
+    prog_->SetUniform("emissive_color_tex", 1);
+    prog_->SetUniform("emissive_color_uv", emissive_color_uv_);
+  }
 }
 
 }  // namespace hyper

@@ -18,24 +18,27 @@ using UberShaderVariantKey = uint32_t;
 
 enum class UberShaderVariantFlags : uint32_t {
   HAS_BONES = (1 << 0),
-  HAS_TEXTURE = (1 << 1),
+  HAS_BASE_TEXTURE = (1 << 1),
+  HAS_EMISSIVE_TEXTURE = (1 << 2),
+  HAS_UV0 = (1 << 3),
+  HAS_UV1 = (1 << 4),
 };
 
 inline constexpr UberShaderVariantFlags operator|(UberShaderVariantFlags a, UberShaderVariantFlags b) {
-    return static_cast<UberShaderVariantFlags>(
-        static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+  return static_cast<UberShaderVariantFlags>(
+      static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
 inline constexpr uint32_t operator|(uint32_t a, UberShaderVariantFlags b) {
-    return a | static_cast<uint32_t>(b);
+  return a | static_cast<uint32_t>(b);
 }
 
 inline constexpr uint32_t operator&(uint32_t a, UberShaderVariantFlags b) {
-    return a & static_cast<uint32_t>(b);
+  return a & static_cast<uint32_t>(b);
 }
 
 inline constexpr uint32_t& operator|=(uint32_t& a, UberShaderVariantFlags b) {
-    return a |= static_cast<uint32_t>(b);
+  return a |= static_cast<uint32_t>(b);
 }
 
 class UberShaderCache {

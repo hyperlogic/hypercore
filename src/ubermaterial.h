@@ -33,28 +33,31 @@ class UberMaterial {
 
   DISABLE_COPY_AND_MOVE(UberMaterial);
 
-  void SetUniform(const std::string& name, const Value& val);
-  void AddTexture(const std::shared_ptr<Texture>& texture);
   void Bind() const;
   const std::shared_ptr<Program>& prog() const { return prog_; }
   const std::string& name() const { return name_; }
-  bool HasTextures() const { return textures_.size() > 0; }
 
-  // material properties aka uniforms
   void SetBaseColorFactor(glm::vec4 base_color_factor);
   glm::vec4 GetBaseColorFactor() const { return base_color_factor_; }
+  void SetBaseColorTexture(const std::shared_ptr<Texture>& texture);
+  bool HasBaseColorTexture() const { return base_color_tex_ != nullptr; }
+
   void SetMetallicFactor(float metallic_factor);
   float GetMetallicFactor() const { return metallic_factor_; }
+
   void SetRoughnessFactor(float roughness_factor);
   float GetRoughnessFactor() const { return roughness_factor_; }
 
  protected:
+  void SetUniform(const std::string& name, const Value& val);
+
   std::string name_;
   std::shared_ptr<Program> prog_;
   std::unordered_map<std::string, std::pair<Program::Variable, Value>> uniforms_;
-  std::vector<std::shared_ptr<Texture>> textures_;
 
   glm::vec4 base_color_factor_;
+  std::shared_ptr<Texture> base_color_tex_;
+
   float metallic_factor_;
   float roughness_factor_;
 };

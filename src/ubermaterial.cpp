@@ -36,6 +36,10 @@ void UberMaterial::SetBaseColorFactor(glm::vec4 base_color_factor) {
   SetUniform("base_color_factor", val);
 }
 
+void UberMaterial::SetBaseColorTexture(const std::shared_ptr<Texture>& texture) {
+  base_color_tex_ = texture;
+}
+
 void UberMaterial::SetMetallicFactor(float metallic_factor) {
   Value val;
   val.f32[0] = metallic_factor;
@@ -46,15 +50,6 @@ void UberMaterial::SetRoughnessFactor(float roughness_factor) {
   Value val;
   val.f32[0] = roughness_factor;
   SetUniform("roughness_factor", val);
-}
-
-void UberMaterial::SetUniform(const std::string& name, const Value& val) {
-  Program::Variable var = prog_->GetUniformVar(name);
-  uniforms_[name] = std::pair(var, val);
-}
-
-void UberMaterial::AddTexture(const std::shared_ptr<Texture>& texture) {
-  textures_.push_back(texture);
 }
 
 void UberMaterial::Bind() const {
@@ -88,12 +83,16 @@ void UberMaterial::Bind() const {
     }
   }
 
-  // AJT(TODO) support more then one texture with differnt semantics
-  if (textures_.size() > 0) {
+  if (base_color_tex_) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textures_[0]->texture);
-    prog_->SetUniform("colorTex", 0);
+    glBindTexture(GL_TEXTURE_2D, base_color_tex_->texture);
+    prog_->SetUniform("base_color_tex", 0);
   }
+}
+
+void UberMaterial::SetUniform(const std::string& name, const Value& val) {
+  Program::Variable var = prog_->GetUniformVar(name);
+  uniforms_[name] = std::pair(var, val);
 }
 
 }  // namespace hyper

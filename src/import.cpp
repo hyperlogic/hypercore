@@ -186,13 +186,13 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
         if (path.data[0] == '*') {
           int idx = std::atoi(path.data + 1);
           auto tex = std::make_shared<Texture>(*image_vec[idx], texParams);
-          mat->AddTexture(tex);
+          mat->SetBaseColorTexture(tex);
           found_image = true;
         } else {
           for (auto& img : image_vec) {
             if (img->filename == path.data) {
               auto tex = std::make_shared<Texture>(*img, texParams);
-              mat->AddTexture(tex);
+              mat->SetBaseColorTexture(tex);
               found_image = true;
             }
           }
@@ -216,7 +216,7 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
           WrapType::Repeat
         };
         auto tex = std::make_shared<Texture>(img, texParams);
-        mat->AddTexture(tex);
+        mat->SetBaseColorTexture(tex);
       }
     }
 
@@ -357,7 +357,7 @@ static std::shared_ptr<Mesh> BuildMesh(
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
-  if (mat->HasTextures()) {
+  if (mat->HasBaseColorTexture()) {
     vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
@@ -439,7 +439,7 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
-  if (mat->HasTextures()) {
+  if (mat->HasBaseColorTexture()) {
     vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv"), buffers->uvBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);

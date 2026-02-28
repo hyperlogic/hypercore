@@ -42,6 +42,8 @@ class UberMaterial {
 
   void SetBaseColorTexture(const std::shared_ptr<Texture>& texture) { base_color_tex_ = texture; }
   bool HasBaseColorTexture() const { return base_color_tex_ != nullptr; }
+  void SetBaseColorUv(int base_color_uv) { base_color_uv_ = base_color_uv; }
+  int GetBaseColorUv() const { return base_color_uv_; }
 
   void SetMetallicFactor(float metallic_factor) { metallic_factor_ = metallic_factor; }
   float GetMetallicFactor() const { return metallic_factor_; }
@@ -54,6 +56,8 @@ class UberMaterial {
 
   void SetEmissiveColorTexture(const std::shared_ptr<Texture>& texture) { emissive_color_tex_ = texture; }
   bool HasEmissiveColorTexture() const { return emissive_color_tex_ != nullptr; }
+  void SetEmissiveColorUv(int emissive_color_uv) { emissive_color_uv_ = emissive_color_uv; }
+  int GetEmissiveColorUv() const { return emissive_color_uv_; }
 
  protected:
   std::string name_;

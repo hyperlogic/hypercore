@@ -203,16 +203,33 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
   if (shading_model == aiShadingMode_PBR_BRDF) {
     auto base_color_tex = LoadTextureFromMat(material, aiTextureType_BASE_COLOR, image_vec);
+    int base_color_uv = 0;
+    material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), base_color_uv);
     auto emissive_color_tex = LoadTextureFromMat(material, aiTextureType_EMISSIVE, image_vec);
+    int emissive_color_uv = 0;
+    material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), emissive_color_uv);
 
     UberShaderVariantKey key = 0;
     if (base_color_tex) {
       key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
-      key |= UberShaderVariantFlags::HAS_UV0;
+      if (base_color_uv == 0) {
+        key |= UberShaderVariantFlags::HAS_UV0;
+      } else if (base_color_uv == 1) {
+        key |= UberShaderVariantFlags::HAS_UV1;
+      } else {
+        Log::W("base_texture using more then two texcoords (%d)\n", base_color_uv);
+      }
     }
     if (emissive_color_tex) {
       key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
-      key |= UberShaderVariantFlags::HAS_UV0;
+
+      if (base_color_uv == 0) {
+        key |= UberShaderVariantFlags::HAS_UV0;
+      } else if (base_color_uv == 1) {
+        key |= UberShaderVariantFlags::HAS_UV1;
+      } else {
+        Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_uv);
+      }
     }
     if (has_bones) {
       key |= UberShaderVariantFlags::HAS_BONES;
@@ -230,6 +247,7 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
 
     if (base_color_tex) {
       mat->SetBaseColorTexture(base_color_tex);
+      mat->SetBaseColorUv(base_color_uv);
     }
 
     float metallic_factor(0.0f);
@@ -247,6 +265,7 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
 
     if (emissive_color_tex) {
       mat->SetEmissiveColorTexture(emissive_color_tex);
+      mat->SetEmissiveColorUv(emissive_color_uv);
     }
 
     return mat;

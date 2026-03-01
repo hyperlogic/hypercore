@@ -387,7 +387,7 @@ static std::shared_ptr<Node> BuildNodeTree(
     const aiScene* scene,
     const aiNode* ai_node,
     std::map<std::string, std::shared_ptr<Node>>& name_to_node_map,
-    std::map<std::string, std::shared_ptr<Node>>& mesh_name_to_node_map,
+    std::map<uint32_t, std::shared_ptr<Node>>& mesh_index_to_node_map,
     std::vector<std::shared_ptr<Node>>& node_vec) {
   assert(ai_node);
 
@@ -412,14 +412,12 @@ static std::shared_ptr<Node> BuildNodeTree(
   name_to_node_map[name] = node;
 
   for (uint32_t i = 0; i < ai_node->mNumMeshes; i++) {
-    const aiMesh* mesh = scene->mMeshes[ai_node->mMeshes[i]];
-    std::string mesh_name = mesh->mName.C_Str();
-    mesh_name_to_node_map[mesh_name] = node;
+    mesh_index_to_node_map[ai_node->mMeshes[i]] = node;
   }
 
   for (uint32_t i = 0; i < ai_node->mNumChildren; i++) {
     auto child = BuildNodeTree(scene, ai_node->mChildren[i], name_to_node_map,
-                               mesh_name_to_node_map, node_vec);
+                               mesh_index_to_node_map, node_vec);
     node->child_vec().push_back(child);
   }
   return node;
@@ -909,10 +907,10 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
   // PrintNode(scene->mRootNode, "");
 
-  std::map<std::string, std::shared_ptr<Node>> mesh_name_to_node_map;
+  std::map<uint32_t, std::shared_ptr<Node>> mesh_index_to_node_map;
   asset->root_node = BuildNodeTree(scene, scene->mRootNode,
                                    asset->string_to_node_map,
-                                   mesh_name_to_node_map, asset->node_vec);
+                                   mesh_index_to_node_map, asset->node_vec);
   asset->root_node->Update();  // update all the abs xforms in the tree.
   Log::D("num nodes = %zu\n", asset->string_to_node_map.size());
   Log::D("num meshes = %d\n", scene->mNumMeshes);
@@ -950,10 +948,9 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), armature->mName.C_Str());
         asset->mesh_vec.push_back(BuildBoneMesh(shader_cache, mesh, mat, node, buffers, image_vec, filename));
       } else {
-        auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
-        if (iter == mesh_name_to_node_map.end()) {
-          Log::E("could not find mesh \"%s\" in node map!\n",
-                 mesh->mName.C_Str());
+        auto iter = mesh_index_to_node_map.find(i);
+        if (iter == mesh_index_to_node_map.end()) {
+          Log::E("could not find mesh (%d) \"%s\" in node map!\n", i, mesh->mName.C_Str());
           continue;
         }
         asset->mesh_vec.push_back(BuildMesh(shader_cache, mesh, mat, iter->second, buffers, image_vec, filename));

@@ -17,6 +17,7 @@
 #include <SDL2/SDL_opengl_glext.h>
 #endif
 
+#include <assimp/color4.h>
 #include <assimp/material.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -243,6 +244,7 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     UberShaderCache& shader_cache,
     const aiMaterial* material,
     bool has_bones,
+    bool has_vertex_colors,
     const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(material);
 
@@ -283,6 +285,9 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     }
     if (has_bones) {
       key |= UberShaderVariantFlags::HAS_BONES;
+    }
+    if (has_vertex_colors) {
+      key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
     }
 
     auto prog = shader_cache.GetOrCreate(key);
@@ -398,15 +403,18 @@ class MeshBuffers {
   MeshBuffers(std::shared_ptr<BufferObject> posBufferIn,
               std::shared_ptr<BufferObject> uvBufferIn,
               std::shared_ptr<BufferObject> normBufferIn,
+              std::shared_ptr<BufferObject> colorBufferIn,
               std::shared_ptr<BufferObject> indexBufferIn) :
       posBuffer(posBufferIn),
       uvBuffer(uvBufferIn),
       normBuffer(normBufferIn),
+      colorBuffer(colorBufferIn),
       indexBuffer(indexBufferIn) {}
 
   std::shared_ptr<BufferObject> posBuffer;
   std::shared_ptr<BufferObject> uvBuffer;
   std::shared_ptr<BufferObject> normBuffer;
+  std::shared_ptr<BufferObject> colorBuffer;
   std::shared_ptr<BufferObject> indexBuffer;
 };
 
@@ -416,8 +424,11 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
   std::vector<glm::vec3> posVec;
   std::vector<glm::vec2> uvVec;
   std::vector<glm::vec3> normVec;
+  std::vector<glm::vec4> colorVec;
   posVec.reserve(mesh->mNumVertices);
   uvVec.reserve(mesh->mNumVertices);
+  normVec.reserve(mesh->mNumVertices);
+  colorVec.reserve(mesh->mNumVertices);
 
   for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
     const aiVector3D& v = mesh->mVertices[i];
@@ -432,6 +443,11 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
 
     const aiVector3D& n = mesh->mNormals[i];
     normVec.push_back(glm::vec3(n.x, n.y, n.z));
+
+    if (mesh->HasVertexColors(0)) {
+      const aiColor4D& c = mesh->mColors[0][i];
+      colorVec.push_back(glm::vec4(c.r, c.g, c.b, c.a));
+    }
   }
 
   std::vector<uint32_t> indexVec;
@@ -447,9 +463,13 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
   auto posBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, posVec);
   auto uvBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, uvVec);
   auto normBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, normVec);
+  std::shared_ptr<BufferObject> colorBuffer;
+  if (mesh->HasVertexColors(0)) {
+    colorBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, colorVec);
+  }
   auto indexBuffer = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, indexVec);
 
-  return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer, indexBuffer);
+  return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer, colorBuffer, indexBuffer);
 }
 
 static std::shared_ptr<Mesh> BuildMesh(
@@ -459,13 +479,16 @@ static std::shared_ptr<Mesh> BuildMesh(
     std::shared_ptr<Node> node,
     std::shared_ptr<MeshBuffers> buffers,
     const std::vector<std::shared_ptr<Image>>& image_vec) {
-  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), image_vec);
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0), image_vec);
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
   if (mat->HasBaseColorTexture() || mat->HasEmissiveColorTexture()) {
     vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv0"), buffers->uvBuffer);
+  }
+  if (ai_mesh->HasVertexColors(0) && buffers->colorBuffer) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("color"), buffers->colorBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
   vao->SetElementBuffer(buffers->indexBuffer);
@@ -483,7 +506,7 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
   assert(ai_mesh->HasBones());
   assert(AI_LMW_MAX_WEIGHTS == 4);
 
-  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), image_vec);
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0), image_vec);
 
   // the order of mBones array is NOT the same as the order of the nodes.
   // we use node_vec and name_to_idx_map to help re-order the indices.
@@ -548,6 +571,9 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("position"), buffers->posBuffer);
   if (mat->HasBaseColorTexture() || mat->HasEmissiveColorTexture()) {
     vao->SetAttribBuffer(mat->prog()->GetAttribLoc("uv0"), buffers->uvBuffer);
+  }
+  if (ai_mesh->HasVertexColors(0) && buffers->colorBuffer) {
+    vao->SetAttribBuffer(mat->prog()->GetAttribLoc("color"), buffers->colorBuffer);
   }
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("normal"), buffers->normBuffer);
   vao->SetAttribBuffer(mat->prog()->GetAttribLoc("boneWeights"), boneWeightsBuffer);

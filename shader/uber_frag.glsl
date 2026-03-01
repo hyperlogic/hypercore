@@ -43,6 +43,9 @@ uniform float metallic_factor;
 uniform float roughness_factor;
 uniform vec3 emissive_color_factor;
 
+in vec3 frag_position;
+in vec3 frag_normal;
+
 #ifdef HAS_UV0
 in vec2 frag_uv0;
 #endif
@@ -51,8 +54,9 @@ in vec2 frag_uv0;
 in vec2 frag_uv1;
 #endif
 
-in vec3 frag_position;
-in vec3 frag_normal;
+#ifdef HAS_VERTEX_COLORS
+in vec4 frag_color;
+#endif
 
 out vec4 out_color;
 
@@ -162,6 +166,11 @@ void main() {
 #endif
 #else
   vec4 base_color = base_color_factor;
+#endif
+
+#ifdef HAS_VERTEX_COLORS
+  // only apply rgb for now
+  base_color.rgb *= frag_color.rgb;
 #endif
 
   // PBR metallic-roughness (glTF 2.0 spec)

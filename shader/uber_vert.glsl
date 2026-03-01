@@ -24,6 +24,7 @@ in vec4 boneIndices;
 #endif
 
 in vec4 position;
+out vec3 frag_position;  // world space
 
 #ifdef HAS_UV0
 in vec2 uv0;
@@ -36,9 +37,12 @@ out vec2 frag_uv1;
 #endif
 
 in vec3 normal;
-
-out vec3 frag_position;  // world space
 out vec3 frag_normal;  // world space
+
+#ifdef HAS_VERTEX_COLORS
+in vec4 color;
+out vec4 frag_color;
+#endif
 
 void main(void) {
 #ifdef HAS_BONES
@@ -66,5 +70,9 @@ void main(void) {
 
 #ifdef HAS_UV1
   frag_uv1 = uv1;
+#endif
+
+#ifdef HAS_VERTEX_COLORS
+	frag_color = color;
 #endif
 }

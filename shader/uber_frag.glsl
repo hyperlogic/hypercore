@@ -164,24 +164,18 @@ void main() {
   vec4 base_color = base_color_factor;
 #endif
 
-  vec3 l_diffuse = lightIntensity * light_direct_color * ndotl * BRDF_lambertian(base_color.rgb);
-
-  vec3 f0_dielectric = vec3(0.04);
-  vec3 f90_dielectric = vec3(1.0);
-  vec3 dielectric_fresnel = F_Schlick(f0_dielectric, f90_dielectric, abs(vdoth));
-  vec3 metal_fresnel = F_Schlick(base_color.rgb, vec3(1.0), abs(vdoth));
-
-  vec3 l_specular_dielectric = vec3(0.0);
-  vec3 l_specular_metal = vec3(0.0);
-
+  // PBR metallic-roughness (glTF 2.0 spec)
+  vec3 c_diff = base_color.rgb * (1.0 - 0.04) * (1.0 - metallic_factor);
+  vec3 f0 = mix(vec3(0.04), base_color.rgb, metallic_factor);
+  vec3 f90 = vec3(1.0);
   float alpha_roughness = roughness_factor * roughness_factor;
-  l_specular_metal = lightIntensity * ndotl * BRDF_specularGGX(alpha_roughness, ndotl, ndotv, ndoth);
-  l_specular_dielectric = l_specular_metal;
 
-  vec3 l_metal_brdf = metal_fresnel * l_specular_metal;
-  vec3 l_dielectric_brdf = mix(l_diffuse, l_specular_dielectric, dielectric_fresnel);
+  vec3 F_specular = F_Schlick(f0, f90, abs(vdoth));
+  vec3 F_diffuse = F_Schlick(f0, f90, ndotv);
+  vec3 f_diffuse = (1.0 - F_diffuse) * BRDF_lambertian(c_diff);
+  vec3 f_specular = F_specular * BRDF_specularGGX(alpha_roughness, ndotl, ndotv, ndoth);
 
-  vec3 l_color = mix(l_dielectric_brdf, l_metal_brdf, metallic_factor);
+  vec3 l_color = (f_diffuse + f_specular) * lightIntensity * light_direct_color * ndotl;
 
 #ifdef HAS_EMISSIVE_TEXTURE
 #ifdef HAS_EMISSIVE_TEXTURE_UV_TRANSFORM
@@ -197,7 +191,9 @@ void main() {
   vec3 emissive_color = emissive_color_factor;
 #endif
 
-  vec3 final_color = light_ambient_color + l_color + emissive_color;
+  //vec3 ambient = light_ambient_color * (c_diff + f0);
+  vec3 ambient = light_ambient_color * ((1.0 - F_diffuse) * c_diff + F_diffuse);
+  vec3 final_color = ambient + l_color + emissive_color;
 
   // premultiplied alpha blending
   out_color.rgb = base_color.a * final_color;

@@ -50,6 +50,21 @@
 
 namespace hyper {
 
+const char* shading_models[0xc] = {
+  "Unknown",
+  "Flat",
+  "Gouraud",
+  "Phong",
+  "Blinn",
+  "Toon",
+  "OrenNayar",
+  "Minnaert",
+  "CookTorrance",
+  "Unlit",
+  "Fresnel",
+  "PBR"
+};
+
 // FBX TimeMode enum values (matches Assimp's FileGlobalSettings::FrameRate)
 enum FbxTimeMode {
   kFbxTimeMode_Default = 0,
@@ -316,7 +331,11 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
 
     return mat;
   } else {
-    Log::W("unsupported shading model = %d\n");
+    const char* shading_model_str = "????";
+    if (shading_model >= 0 && shading_model <= aiShadingMode_PBR_BRDF) {
+      shading_model_str = shading_models[shading_model];
+    }
+    Log::W("unsupported shading model %s (%d)\n", shading_model_str, shading_model);
 
     UberShaderVariantKey key = 0;
     if (has_bones) {

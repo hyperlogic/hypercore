@@ -66,11 +66,19 @@ vec2 get_uv(int idx) {
 }
 #elif defined(HAS_UV0)
 vec2 get_uv(int idx) {
-  return frag_uv0;
+  if (idx == 0) {
+    return frag_uv0;
+  } else {
+    return vec2(0.0, 0.0);
+  }
 }
 #elif defined(HAS_UV1)
 vec2 get_uv(int idx) {
-  return frag_uv1;
+  if (idx == 1) {
+    return frag_uv1;
+  } else {
+    return vec2(0.0, 0.0);
+  }
 }
 #endif
 

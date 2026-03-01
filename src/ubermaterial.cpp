@@ -17,16 +17,23 @@
 
 namespace hyper {
 
-UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog)
+UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& prog, UberShaderVariantKey key)
     : name_(name),
+      key_(key),
       prog_(prog),
       base_color_factor_(1.0f, 1.0f, 1.0f, 1.0f),
       base_color_tex_(),
-      base_color_uv_(0),
+      base_color_uv_index_(0),
+      base_color_uv_offset_(0.0f, 0.0f),
+      base_color_uv_scale_(0.0f, 0.0f),
+      base_color_uv_rotation_(0.0f),
       metallic_factor_(1.0f),
       roughness_factor_(1.0f),
       emissive_color_factor_(0.0f, 0.0f, 0.0f),
-      emissive_color_uv_() {
+      emissive_color_uv_index_(),
+      emissive_color_uv_offset_(0.0f, 0.0f),
+      emissive_color_uv_scale_(0.0f, 0.0f),
+      emissive_color_uv_rotation_(0.0f) {
 }
 
 UberMaterial::~UberMaterial() {
@@ -37,24 +44,32 @@ void UberMaterial::Bind() const {
 
   // TODO(AJT): cache the uniform locs..
   prog_->SetUniform("base_color_factor", base_color_factor_);
-
-  if (base_color_tex_) {
+  if (key_ & UberShaderVariantFlags::HAS_BASE_TEXTURE) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, base_color_tex_->texture);
     prog_->SetUniform("base_color_tex", 0);
-    prog_->SetUniform("base_color_uv", base_color_uv_);
+    prog_->SetUniform("base_color_uv_index", base_color_uv_index_);
+    if (key_ & UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM) {
+      prog_->SetUniform("base_color_uv_offset", base_color_uv_offset_);
+      prog_->SetUniform("base_color_uv_scale", base_color_uv_scale_);
+      prog_->SetUniform("base_color_uv_rotation", base_color_uv_rotation_);
+    }
   }
 
   prog_->SetUniform("metallic_factor", metallic_factor_);
   prog_->SetUniform("roughness_factor", roughness_factor_);
 
   prog_->SetUniform("emissive_color_factor", emissive_color_factor_);
-
-  if (emissive_color_tex_) {
+  if (key_ & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, emissive_color_tex_->texture);
     prog_->SetUniform("emissive_color_tex", 1);
-    prog_->SetUniform("emissive_color_uv", emissive_color_uv_);
+    prog_->SetUniform("emissive_color_uv_index", emissive_color_uv_index_);
+    if (key_ & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM) {
+      prog_->SetUniform("emissive_color_uv_offset", emissive_color_uv_offset_);
+      prog_->SetUniform("emissive_color_uv_scale", emissive_color_uv_scale_);
+      prog_->SetUniform("emissive_color_uv_rotation", emissive_color_uv_rotation_);
+    }
   }
 }
 

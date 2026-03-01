@@ -139,9 +139,41 @@ static std::shared_ptr<Image> BuildTextureImage(const aiTexture* texture) {
   return img;
 }
 
-static std::shared_ptr<Texture> LoadTextureFromMat(const aiMaterial* material, aiTextureType texture_type,
-                                                   const std::vector<std::shared_ptr<Image>>& image_vec) {
+struct TextureInfo {
+  TextureInfo()
+      : texture(),
+        uv_index(0),
+        has_uv_transform(false),
+        uv_offset(0.0f, 0.0f),
+        uv_scale(0.0f, 0.0f),
+        uv_rotation(0.0f) {}
+  std::shared_ptr<Texture> texture;
+  int uv_index;
+  bool has_uv_transform;
+  glm::vec2 uv_offset;
+  glm::vec2 uv_scale;
+  float uv_rotation;
+};
+
+static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureType texture_type,
+                                          const std::vector<std::shared_ptr<Image>>& image_vec) {
   assert(material);
+
+  TextureInfo result;
+  material->Get(AI_MATKEY_UVWSRC(texture_type, 0), result.uv_index);
+
+  aiUVTransform uvTransform;
+  unsigned int max = sizeof(aiUVTransform) / sizeof(ai_real);
+  if (aiGetMaterialFloatArray(material, AI_MATKEY_UVTRANSFORM(texture_type, 0),
+                              reinterpret_cast<float*>(&uvTransform), &max) == AI_SUCCESS) {
+    result.has_uv_transform = true;
+    result.uv_offset.x = uvTransform.mTranslation.x;
+    result.uv_offset.y = uvTransform.mTranslation.y;
+    result.uv_scale.x = uvTransform.mScaling.x;
+    result.uv_scale.y = uvTransform.mScaling.y;
+    result.uv_rotation = uvTransform.mRotation;
+  }
+
   if (material->GetTextureCount(texture_type) > 0) {
     bool found_image = false;
     aiString path;
@@ -159,11 +191,13 @@ static std::shared_ptr<Texture> LoadTextureFromMat(const aiMaterial* material, a
       };
       if (path.data[0] == '*') {
         int idx = std::atoi(path.data + 1);
-        return std::make_shared<Texture>(*image_vec[idx], tex_params);
+        result.texture = std::make_shared<Texture>(*image_vec[idx], tex_params);
+        found_image = true;
       } else {
         for (auto& img : image_vec) {
           if (img->filename == path.data) {
-            return std::make_shared<Texture>(*img, tex_params);
+            result.texture = std::make_shared<Texture>(*img, tex_params);
+            found_image = true;
           }
         }
       }
@@ -175,7 +209,7 @@ static std::shared_ptr<Texture> LoadTextureFromMat(const aiMaterial* material, a
       Image img;
       if (!img.Load("texture/checkerboard.png")) {
         Log::E("Error loading checkerboard.png\n");
-        return nullptr;
+        return result;
       }
       img.is_srgb = false;  // isFramebufferSRGBEnabledIn;
       Texture::Params tex_params = {
@@ -184,10 +218,10 @@ static std::shared_ptr<Texture> LoadTextureFromMat(const aiMaterial* material, a
         WrapType::Repeat,
         WrapType::Repeat
       };
-      return std::make_shared<Texture>(img, tex_params);
+      result.texture = std::make_shared<Texture>(img, tex_params);
     }
   }
-  return nullptr;
+  return result;
 }
 
 static std::shared_ptr<UberMaterial> BuildMaterial(
@@ -202,40 +236,42 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   int32_t shading_model = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
   if (shading_model == aiShadingMode_PBR_BRDF) {
-    auto base_color_tex = LoadTextureFromMat(material, aiTextureType_BASE_COLOR, image_vec);
-    int base_color_uv = 0;
-    material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), base_color_uv);
-    auto emissive_color_tex = LoadTextureFromMat(material, aiTextureType_EMISSIVE, image_vec);
-    int emissive_color_uv = 0;
-    material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE, 0), emissive_color_uv);
+    auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec);
+    auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec);
 
     UberShaderVariantKey key = 0;
-    if (base_color_tex) {
+    if (base_color_tex_info.texture) {
       key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
-      if (base_color_uv == 0) {
+      if (base_color_tex_info.uv_index == 0) {
         key |= UberShaderVariantFlags::HAS_UV0;
-      } else if (base_color_uv == 1) {
+      } else if (base_color_tex_info.uv_index == 1) {
         key |= UberShaderVariantFlags::HAS_UV1;
       } else {
-        Log::W("base_texture using more then two texcoords (%d)\n", base_color_uv);
+        Log::W("base_texture using more then two texcoords (%d)\n", base_color_tex_info.uv_index);
+      }
+      if (base_color_tex_info.has_uv_transform) {
+        key |= UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM;
       }
     }
-    if (emissive_color_tex) {
+    if (emissive_color_tex_info.texture) {
       key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
-
-      if (base_color_uv == 0) {
+      if (emissive_color_tex_info.uv_index == 0) {
         key |= UberShaderVariantFlags::HAS_UV0;
-      } else if (base_color_uv == 1) {
+      } else if (emissive_color_tex_info.uv_index == 1) {
         key |= UberShaderVariantFlags::HAS_UV1;
       } else {
-        Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_uv);
+        Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_tex_info.uv_index);
+      }
+      if (emissive_color_tex_info.has_uv_transform) {
+        key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM;
       }
     }
     if (has_bones) {
       key |= UberShaderVariantFlags::HAS_BONES;
     }
+
     auto prog = shader_cache.GetOrCreate(key);
-    auto mat = std::make_shared<UberMaterial>(mat_name, prog);
+    auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
 
     float opacity = 1.0f;
     material->Get(AI_MATKEY_OPACITY, opacity);
@@ -245,9 +281,14 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     glm::vec4 v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
     mat->SetBaseColorFactor(v4);
 
-    if (base_color_tex) {
-      mat->SetBaseColorTexture(base_color_tex);
-      mat->SetBaseColorUv(base_color_uv);
+    if (base_color_tex_info.texture) {
+      mat->SetBaseColorTexture(base_color_tex_info.texture);
+      mat->SetBaseColorUvIndex(base_color_tex_info.uv_index);
+      if (base_color_tex_info.has_uv_transform) {
+        mat->SetBaseColorUvOffset(base_color_tex_info.uv_offset);
+        mat->SetBaseColorUvScale(base_color_tex_info.uv_scale);
+        mat->SetBaseColorUvRotation(base_color_tex_info.uv_rotation);
+      }
     }
 
     float metallic_factor(0.0f);
@@ -263,9 +304,14 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
     mat->SetEmissiveColorFactor(v3);
 
-    if (emissive_color_tex) {
-      mat->SetEmissiveColorTexture(emissive_color_tex);
-      mat->SetEmissiveColorUv(emissive_color_uv);
+    if (emissive_color_tex_info.texture) {
+      mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
+      mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
+      if (emissive_color_tex_info.has_uv_transform) {
+        mat->SetEmissiveColorUvOffset(emissive_color_tex_info.uv_offset);
+        mat->SetEmissiveColorUvScale(emissive_color_tex_info.uv_scale);
+        mat->SetEmissiveColorUvRotation(emissive_color_tex_info.uv_rotation);
+      }
     }
 
     return mat;
@@ -277,7 +323,7 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
       key |= UberShaderVariantFlags::HAS_BONES;
     }
     auto prog = shader_cache.GetOrCreate(key);
-    auto mat = std::make_shared<UberMaterial>(mat_name, prog);
+    auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
 
     mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
     mat->SetEmissiveColorFactor(glm::vec3(1.0f, 1.0f, 1.0f));

@@ -29,8 +29,14 @@ std::shared_ptr<Program> UberShaderCache::GetOrCreate(const UberShaderVariantKey
     if (key & UberShaderVariantFlags::HAS_BASE_TEXTURE) {
       mat_info += "#define HAS_BASE_TEXTURE\n";
     }
+    if (key & UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM) {
+      mat_info += "#define HAS_BASE_TEXTURE_UV_TRANSFORM\n";
+    }
     if (key & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE) {
       mat_info += "#define HAS_EMISSIVE_TEXTURE\n";
+    }
+    if (key & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM) {
+      mat_info += "#define HAS_EMISSIVE_TEXTURE_UV_TRANSFORM\n";
     }
     if (key & UberShaderVariantFlags::HAS_UV0) {
       mat_info += "#define HAS_UV0\n";

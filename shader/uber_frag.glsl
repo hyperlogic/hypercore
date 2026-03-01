@@ -14,12 +14,22 @@ const float M_PI = 3.141592653589793;
 
 #ifdef HAS_BASE_TEXTURE
 uniform sampler2D base_color_tex;
-uniform int base_color_uv;
+uniform int base_color_uv_index;
+#ifdef HAS_BASE_TEXTURE_UV_TRANSFORM
+uniform vec2 base_color_uv_offset;
+uniform vec2 base_color_uv_scale;
+uniform float base_color_uv_rotation;
+#endif
 #endif
 
 #ifdef HAS_EMISSIVE_TEXTURE
 uniform sampler2D emissive_color_tex;
-uniform int emissive_color_uv;
+uniform int emissive_color_uv_index;
+#ifdef HAS_EMISSIVE_TEXTURE_UV_TRANSFORM
+uniform vec2 emissive_color_uv_offset;
+uniform vec2 emissive_color_uv_scale;
+uniform float emissive_color_uv_rotation;
+#endif
 #endif
 
 uniform vec3 camera_pos;
@@ -63,6 +73,12 @@ vec2 get_uv(int idx) {
   return frag_uv1;
 }
 #endif
+
+vec2 uv_transform(vec2 uv, vec2 offset, vec2 scale, float rotation) {
+    float c = cos(rotation);
+    float s = sin(rotation);
+    return mat2(c, s, -s, c) * (uv * scale) + offset;
+}
 
 float ClampedDot(vec3 x, vec3 y) {
   return clamp(dot(x, y), 0.0, 1.0);
@@ -127,7 +143,15 @@ void main() {
   float lightIntensity = 4.0;
 
 #ifdef HAS_BASE_TEXTURE
-  vec4 base_color = texture(base_color_tex, get_uv(base_color_uv)) * base_color_factor;
+#ifdef HAS_BASE_TEXTURE_UV_TRANSFORM
+  vec2 base_color_uv = uv_transform(get_uv(base_color_uv_index),
+                                    base_color_uv_offset,
+                                    base_color_uv_scale,
+                                    base_color_uv_rotation);
+  vec4 base_color = texture(base_color_tex, base_color_uv) * base_color_factor;
+#else
+  vec4 base_color = texture(base_color_tex, get_uv(base_color_uv_index)) * base_color_factor;
+#endif
 #else
   vec4 base_color = base_color_factor;
 #endif
@@ -152,7 +176,15 @@ void main() {
   vec3 l_color = mix(l_dielectric_brdf, l_metal_brdf, metallic_factor);
 
 #ifdef HAS_EMISSIVE_TEXTURE
-  vec3 emissive_color = texture(emissive_color_tex, get_uv(emissive_color_uv)).rgb * emissive_color_factor;
+#ifdef HAS_EMISSIVE_TEXTURE_UV_TRANSFORM
+  vec2 emissive_color_uv = uv_transform(get_uv(emissive_color_uv_index),
+                                        emissive_color_uv_offset,
+                                        emissive_color_uv_scale,
+                                        emissive_color_uv_rotation);
+  vec3 emissive_color = texture(emissive_color_tex, emissive_color_uv).rgb * emissive_color_factor;
+#else
+  vec3 emissive_color = texture(emissive_color_tex, get_uv(emissive_color_uv_index)).rgb * emissive_color_factor;
+#endif
 #else
   vec3 emissive_color = emissive_color_factor;
 #endif

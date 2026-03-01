@@ -19,9 +19,11 @@ using UberShaderVariantKey = uint32_t;
 enum class UberShaderVariantFlags : uint32_t {
   HAS_BONES = (1 << 0),
   HAS_BASE_TEXTURE = (1 << 1),
-  HAS_EMISSIVE_TEXTURE = (1 << 2),
-  HAS_UV0 = (1 << 3),
-  HAS_UV1 = (1 << 4),
+  HAS_BASE_TEXTURE_UV_TRANSFORM = (1 << 2),
+  HAS_EMISSIVE_TEXTURE = (1 << 3),
+  HAS_EMISSIVE_TEXTURE_UV_TRANSFORM = (1 << 4),
+  HAS_UV0 = (1 << 5),
+  HAS_UV1 = (1 << 6),
 };
 
 inline constexpr UberShaderVariantFlags operator|(UberShaderVariantFlags a, UberShaderVariantFlags b) {

@@ -15,6 +15,7 @@
 #include <glm/glm.hpp>
 
 #include "src/program.h"
+#include "src/ubershader.h"
 #include "src/util.h"
 
 namespace hyper {
@@ -28,7 +29,7 @@ class UberMaterial {
     int32_t i32[4];
     uint32_t u32[4];
   };
-  UberMaterial(const std::string& name, std::shared_ptr<Program>& prog);
+  UberMaterial(const std::string& name, std::shared_ptr<Program>& prog, UberShaderVariantKey key);
   ~UberMaterial();
 
   DISABLE_COPY_AND_MOVE(UberMaterial);
@@ -42,8 +43,15 @@ class UberMaterial {
 
   void SetBaseColorTexture(const std::shared_ptr<Texture>& texture) { base_color_tex_ = texture; }
   bool HasBaseColorTexture() const { return base_color_tex_ != nullptr; }
-  void SetBaseColorUv(int base_color_uv) { base_color_uv_ = base_color_uv; }
-  int GetBaseColorUv() const { return base_color_uv_; }
+  void SetBaseColorUvIndex(int base_color_uv_index) { base_color_uv_index_ = base_color_uv_index; }
+  int GetBaseColorUvIndex() const { return base_color_uv_index_; }
+
+  void SetBaseColorUvOffset(glm::vec2 uv_offset) { base_color_uv_offset_ = uv_offset; }
+  glm::vec2 GetBaseColorUvOffset() const { return base_color_uv_offset_; }
+  void SetBaseColorUvScale(glm::vec2 uv_scale) { base_color_uv_scale_ = uv_scale; }
+  glm::vec2 GetBaseColorUvScale() const { return base_color_uv_scale_; }
+  void SetBaseColorUvRotation(float rotation) { base_color_uv_rotation_ = rotation; }
+  float GetBaseColorUvRotation() const { return base_color_uv_rotation_; }
 
   void SetMetallicFactor(float metallic_factor) { metallic_factor_ = metallic_factor; }
   float GetMetallicFactor() const { return metallic_factor_; }
@@ -56,24 +64,38 @@ class UberMaterial {
 
   void SetEmissiveColorTexture(const std::shared_ptr<Texture>& texture) { emissive_color_tex_ = texture; }
   bool HasEmissiveColorTexture() const { return emissive_color_tex_ != nullptr; }
-  void SetEmissiveColorUv(int emissive_color_uv) { emissive_color_uv_ = emissive_color_uv; }
-  int GetEmissiveColorUv() const { return emissive_color_uv_; }
+  void SetEmissiveColorUvIndex(int emissive_color_uv_index) { emissive_color_uv_index_ = emissive_color_uv_index; }
+  int GetEmissiveColorUvIndex() const { return emissive_color_uv_index_; }
+
+  void SetEmissiveColorUvOffset(glm::vec2 uv_offset) { emissive_color_uv_offset_ = uv_offset; }
+  glm::vec2 GetEmissiveColorUvOffset() const { return emissive_color_uv_offset_; }
+  void SetEmissiveColorUvScale(glm::vec2 uv_scale) { emissive_color_uv_scale_ = uv_scale; }
+  glm::vec2 GetEmissiveColorUvScale() const { return emissive_color_uv_scale_; }
+  void SetEmissiveColorUvRotation(float uv_rotation) { emissive_color_uv_rotation_ = uv_rotation; }
+  float GetEmissiveColorUvRotation() const { return emissive_color_uv_rotation_; }
+
 
  protected:
   std::string name_;
+  UberShaderVariantKey key_;
   std::shared_ptr<Program> prog_;
-  std::unordered_map<std::string, std::pair<Program::Variable, Value>> uniforms_;
 
   glm::vec4 base_color_factor_;
   std::shared_ptr<Texture> base_color_tex_;
-  int base_color_uv_;
+  int base_color_uv_index_;
+  glm::vec2 base_color_uv_offset_;
+  glm::vec2 base_color_uv_scale_;
+  float base_color_uv_rotation_;
 
   float metallic_factor_;
   float roughness_factor_;
 
   glm::vec3 emissive_color_factor_;
   std::shared_ptr<Texture> emissive_color_tex_;
-  int emissive_color_uv_;
+  int emissive_color_uv_index_;
+  glm::vec2 emissive_color_uv_offset_;
+  glm::vec2 emissive_color_uv_scale_;
+  float emissive_color_uv_rotation_;
 };
 
 }  // namespace hyper

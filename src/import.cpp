@@ -171,8 +171,22 @@ struct TextureInfo {
   float uv_rotation;
 };
 
+WrapType ConvertToWrapType(aiTextureMapMode map_mode) {
+  switch (map_mode) {
+    default:
+    case aiTextureMapMode_Wrap:
+      return WrapType::Repeat;
+    case aiTextureMapMode_Clamp:
+    case aiTextureMapMode_Decal:
+      return WrapType::ClampToEdge;
+    case aiTextureMapMode_Mirror:
+      return WrapType::Repeat;
+  }
+}
+
 static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureType texture_type,
-                                          const std::vector<std::shared_ptr<Image>>& image_vec) {
+                                          const std::vector<std::shared_ptr<Image>>& image_vec,
+                                          const std::string& asset_filename) {
   assert(material);
 
   TextureInfo result;
@@ -194,18 +208,21 @@ static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureT
     bool found_image = false;
     aiString path;
     aiTextureMapping mapping;
-    if (material->GetTexture(texture_type, 0, &path, &mapping) > 0) {
-      Log::W("Failed to find texture_type %d in material \"%s\"\n",
-             texture_type, material->GetName().C_Str());
+    aiTextureMapMode map_mode[2];
+    unsigned int uv_index;
+    float blend;
+    aiTextureOp op;
+
+    if (material->GetTexture(texture_type, 0, &path, &mapping, &uv_index, &blend, &op, map_mode) > 0) {
+      Log::W("Failed to find texture_type %d in material \"%s\"\n", texture_type, material->GetName().C_Str());
     } else {
-      // TODO(AJT): load from mapping
       Texture::Params tex_params = {
         FilterType::LinearMipmapLinear,
         FilterType::Linear,
-        WrapType::Repeat,
-        WrapType::Repeat
+        ConvertToWrapType(map_mode[0]),
+        ConvertToWrapType(map_mode[1])
       };
-      if (path.data[0] == '*') {
+      if (path.data[0] == '*') {  // embedded
         int idx = std::atoi(path.data + 1);
         result.texture = std::make_shared<Texture>(*image_vec[idx], tex_params);
         found_image = true;
@@ -213,6 +230,15 @@ static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureT
         for (auto& img : image_vec) {
           if (img->filename == path.data) {
             result.texture = std::make_shared<Texture>(*img, tex_params);
+            found_image = true;
+          }
+        }
+        if (!found_image) {
+          // Search for texture in asset_filename path.
+          std::string asset_path = asset_filename.substr(0, asset_filename.find_last_of("/\\"));
+          Image img;
+          if (img.Load(asset_path + "/" + path.C_Str())) {
+            result.texture = std::make_shared<Texture>(img, tex_params);
             found_image = true;
           }
         }
@@ -245,7 +271,8 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     const aiMaterial* material,
     bool has_bones,
     bool has_vertex_colors,
-    const std::vector<std::shared_ptr<Image>>& image_vec) {
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
   assert(material);
 
   std::string mat_name = material->GetName().C_Str();
@@ -253,8 +280,8 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   int32_t shading_model = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
   if (shading_model == aiShadingMode_PBR_BRDF) {
-    auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec);
-    auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec);
+    auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec, asset_filename);
+    auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec, asset_filename);
 
     UberShaderVariantKey key = 0;
     if (base_color_tex_info.texture) {
@@ -478,8 +505,10 @@ static std::shared_ptr<Mesh> BuildMesh(
     const aiMaterial* ai_mat,
     std::shared_ptr<Node> node,
     std::shared_ptr<MeshBuffers> buffers,
-    const std::vector<std::shared_ptr<Image>>& image_vec) {
-  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0), image_vec);
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0),
+                           image_vec, asset_filename);
 
   // setup vertex array object with buffers
   auto vao = std::make_shared<VertexArrayObject>();
@@ -501,12 +530,14 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
     const aiMaterial* ai_mat,
     std::shared_ptr<Node> node,
     std::shared_ptr<MeshBuffers> buffers,
-    const std::vector<std::shared_ptr<Image>>& image_vec) {
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
   assert(node);
   assert(ai_mesh->HasBones());
   assert(AI_LMW_MAX_WEIGHTS == 4);
 
-  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0), image_vec);
+  auto mat = BuildMaterial(shader_cache, ai_mat, ai_mesh->HasBones(), ai_mesh->HasVertexColors(0),
+                           image_vec, asset_filename);
 
   // the order of mBones array is NOT the same as the order of the nodes.
   // we use node_vec and name_to_idx_map to help re-order the indices.
@@ -917,7 +948,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
           continue;
         }
         Log::I("loading mesh %s -> %s...\n", mesh->mName.C_Str(), armature->mName.C_Str());
-        asset->mesh_vec.push_back(BuildBoneMesh(shader_cache, mesh, mat, node, buffers, image_vec));
+        asset->mesh_vec.push_back(BuildBoneMesh(shader_cache, mesh, mat, node, buffers, image_vec, filename));
       } else {
         auto iter = mesh_name_to_node_map.find(mesh->mName.C_Str());
         if (iter == mesh_name_to_node_map.end()) {
@@ -925,7 +956,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
                  mesh->mName.C_Str());
           continue;
         }
-        asset->mesh_vec.push_back(BuildMesh(shader_cache, mesh, mat, iter->second, buffers, image_vec));
+        asset->mesh_vec.push_back(BuildMesh(shader_cache, mesh, mat, iter->second, buffers, image_vec, filename));
       }
     } else {
       Log::W("mesh \"%s\" skipped, HasPositions = %s, HasNormals = %s\n",

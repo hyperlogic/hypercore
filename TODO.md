@@ -2,7 +2,6 @@ ubershader work
 ---------------------
 I want to support core glTF-asset models.
 
-* Properly set texture params (loop/clamp etc)
 * Roughness/Metallic textures
 * Normal maps
 * Occlusion maps

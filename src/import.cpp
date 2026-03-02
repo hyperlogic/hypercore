@@ -282,7 +282,8 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
   if (shading_model == aiShadingMode_PBR_BRDF) {
     auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec, asset_filename);
     auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec, asset_filename);
-
+    auto metallic_roughness_tex_info = LoadTextureInfoFromMat(material, aiTextureType_GLTF_METALLIC_ROUGHNESS,
+                                                              image_vec, asset_filename);
     UberShaderVariantKey key = 0;
     if (base_color_tex_info.texture) {
       key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
@@ -308,6 +309,19 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
       }
       if (emissive_color_tex_info.has_uv_transform) {
         key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM;
+      }
+    }
+    if (metallic_roughness_tex_info.texture) {
+      key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE;
+      if (metallic_roughness_tex_info.uv_index == 0) {
+        key |= UberShaderVariantFlags::HAS_UV0;
+      } else if (emissive_color_tex_info.uv_index == 1) {
+        key |= UberShaderVariantFlags::HAS_UV1;
+      } else {
+        Log::W("metallic_roughness_texture using more then two texcoords (%d)\n", metallic_roughness_tex_info.uv_index);
+      }
+      if (metallic_roughness_tex_info.has_uv_transform) {
+        key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM;
       }
     }
     if (has_bones) {
@@ -338,19 +352,6 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
       }
     }
 
-    float metallic_factor(0.0f);
-    material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
-    mat->SetMetallicFactor(metallic_factor);
-
-    float roughness_factor(1.0f);
-    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
-    mat->SetRoughnessFactor(roughness_factor);
-
-    aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
-    material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
-    glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
-    mat->SetEmissiveColorFactor(v3);
-
     if (emissive_color_tex_info.texture) {
       mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
       mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
@@ -360,6 +361,30 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
         mat->SetEmissiveColorUvRotation(emissive_color_tex_info.uv_rotation);
       }
     }
+
+    float metallic_factor(0.0f);
+    material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
+    mat->SetMetallicFactor(metallic_factor);
+
+    float roughness_factor(1.0f);
+    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+    mat->SetRoughnessFactor(roughness_factor);
+
+    if (metallic_roughness_tex_info.texture) {
+      mat->SetMetallicRoughnessTexture(metallic_roughness_tex_info.texture);
+      mat->SetMetallicRoughnessUvIndex(metallic_roughness_tex_info.uv_index);
+      if (metallic_roughness_tex_info.has_uv_transform) {
+        mat->SetMetallicRoughnessUvOffset(metallic_roughness_tex_info.uv_offset);
+        mat->SetMetallicRoughnessUvScale(metallic_roughness_tex_info.uv_scale);
+        mat->SetMetallicRoughnessUvRotation(metallic_roughness_tex_info.uv_rotation);
+      }
+    }
+
+    aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
+    material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
+    glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
+    mat->SetEmissiveColorFactor(v3);
+
 
     return mat;
   } else {

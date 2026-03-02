@@ -58,6 +58,17 @@ void UberMaterial::Bind() const {
 
   prog_->SetUniform("metallic_factor", metallic_factor_);
   prog_->SetUniform("roughness_factor", roughness_factor_);
+  if (key_ & UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, metallic_roughness_tex_->texture);
+    prog_->SetUniform("metallic_roughness_tex", 1);
+    prog_->SetUniform("metallic_roughness_uv_index", metallic_roughness_uv_index_);
+    if (key_ & UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM) {
+      prog_->SetUniform("metallic_roughness_uv_offset", metallic_roughness_uv_offset_);
+      prog_->SetUniform("metallic_roughness_uv_scale", metallic_roughness_uv_scale_);
+      prog_->SetUniform("metallic_roughness_uv_rotation", metallic_roughness_uv_rotation_);
+    }
+  }
 
   prog_->SetUniform("emissive_color_factor", emissive_color_factor_);
   if (key_ & UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE) {

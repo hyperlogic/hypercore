@@ -32,6 +32,16 @@ uniform float emissive_color_uv_rotation;
 #endif
 #endif
 
+#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
+uniform sampler2D metallic_roughness_tex;
+uniform int metallic_roughness_uv_index;
+#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM
+uniform vec2 metallic_roughness_uv_offset;
+uniform vec2 metallic_roughness_uv_scale;
+uniform float metallic_roughness_uv_rotation;
+#endif
+#endif
+
 uniform vec3 camera_pos;
 
 uniform vec3 light_direct_dir;
@@ -173,11 +183,30 @@ void main() {
   base_color.rgb *= frag_color.rgb;
 #endif
 
+#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
+#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM
+  vec2 metallic_roughness_uv = uv_transform(get_uv(metallic_roughness_uv_index),
+                                            metallic_roughness_uv_offset,
+                                            metallic_roughness_uv_scale,
+                                            metallic_roughness_uv_rotation);
+  vec2 mr = texture(metallic_roughness_tex, metallic_roughness_uv).bg;
+  float metallic = mr.x * metallic_factor;
+  float roughness = mr.y * roughness_factor;
+#else
+  vec2 mr = texture(metallic_roughness_tex, get_uv(metallic_roughness_uv_index)).bg;
+  float metallic = mr.x * metallic_factor;
+  float roughness = mr.y * roughness_factor;
+#endif
+#else
+  float metallic = metallic_factor;
+  float roughness = roughness_factor;
+#endif
+
   // PBR metallic-roughness (glTF 2.0 spec)
-  vec3 c_diff = base_color.rgb * (1.0 - 0.04) * (1.0 - metallic_factor);
-  vec3 f0 = mix(vec3(0.04), base_color.rgb, metallic_factor);
+  vec3 c_diff = base_color.rgb * (1.0 - 0.04) * (1.0 - metallic);
+  vec3 f0 = mix(vec3(0.04), base_color.rgb, metallic);
   vec3 f90 = vec3(1.0);
-  float alpha_roughness = roughness_factor * roughness_factor;
+  float alpha_roughness = roughness * roughness;
 
   vec3 F_specular = F_Schlick(f0, f90, abs(vdoth));
   vec3 F_diffuse = F_Schlick(f0, f90, ndotv);

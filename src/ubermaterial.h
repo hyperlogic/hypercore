@@ -59,6 +59,20 @@ class UberMaterial {
   void SetRoughnessFactor(float roughness_factor) { roughness_factor_ = roughness_factor; }
   float GetRoughnessFactor() const { return roughness_factor_; }
 
+  void SetMetallicRoughnessTexture(const std::shared_ptr<Texture>& texture) { metallic_roughness_tex_ = texture; }
+  bool HasMetallicRoughnessTexture() const { return metallic_roughness_tex_ != nullptr; }
+  void SetMetallicRoughnessUvIndex(int metallic_roughness_uv_index) {
+    metallic_roughness_uv_index_ = metallic_roughness_uv_index;
+  }
+  int GetMetallicRoughnessUvIndex() const { return metallic_roughness_uv_index_; }
+
+  void SetMetallicRoughnessUvOffset(glm::vec2 uv_offset) { metallic_roughness_uv_offset_ = uv_offset; }
+  glm::vec2 GetMetallicRoughnessUvOffset() const { return metallic_roughness_uv_offset_; }
+  void SetMetallicRoughnessUvScale(glm::vec2 uv_scale) { metallic_roughness_uv_scale_ = uv_scale; }
+  glm::vec2 GetMetallicRoughnessUvScale() const { return metallic_roughness_uv_scale_; }
+  void SetMetallicRoughnessUvRotation(float uv_rotation) { metallic_roughness_uv_rotation_ = uv_rotation; }
+  float GetMetallicRoughnessUvRotation() const { return metallic_roughness_uv_rotation_; }
+
   void SetEmissiveColorFactor(glm::vec3 emissive_color_factor) { emissive_color_factor_ = emissive_color_factor; }
   glm::vec3 GetEmissiveColorFactor() const { return emissive_color_factor_; }
 
@@ -74,7 +88,6 @@ class UberMaterial {
   void SetEmissiveColorUvRotation(float uv_rotation) { emissive_color_uv_rotation_ = uv_rotation; }
   float GetEmissiveColorUvRotation() const { return emissive_color_uv_rotation_; }
 
-
  protected:
   std::string name_;
   UberShaderVariantKey key_;
@@ -89,6 +102,13 @@ class UberMaterial {
 
   float metallic_factor_;
   float roughness_factor_;
+
+  glm::vec3 metallic_roughness_factor_;
+  std::shared_ptr<Texture> metallic_roughness_tex_;
+  int metallic_roughness_uv_index_;
+  glm::vec2 metallic_roughness_uv_offset_;
+  glm::vec2 metallic_roughness_uv_scale_;
+  float metallic_roughness_uv_rotation_;
 
   glm::vec3 emissive_color_factor_;
   std::shared_ptr<Texture> emissive_color_tex_;

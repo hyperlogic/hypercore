@@ -22,9 +22,11 @@ enum class UberShaderVariantFlags : uint32_t {
   HAS_BASE_TEXTURE_UV_TRANSFORM = (1 << 2),
   HAS_EMISSIVE_TEXTURE = (1 << 3),
   HAS_EMISSIVE_TEXTURE_UV_TRANSFORM = (1 << 4),
-  HAS_UV0 = (1 << 5),
-  HAS_UV1 = (1 << 6),
-  HAS_VERTEX_COLORS = (1 << 7),
+  HAS_METALLIC_ROUGHNESS_TEXTURE = (1 << 5),
+  HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM = (1 << 6),
+  HAS_UV0 = (1 << 7),
+  HAS_UV1 = (1 << 8),
+  HAS_VERTEX_COLORS = (1 << 9),
 };
 
 inline constexpr UberShaderVariantFlags operator|(UberShaderVariantFlags a, UberShaderVariantFlags b) {

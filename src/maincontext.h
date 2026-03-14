@@ -37,6 +37,7 @@ struct MainContext {
   EGLConfig config;
   EGLContext context;
   android_app* androidApp;
+  float dpi_scale;
 };
 #elif defined(__linux__)
 struct MainContext {
@@ -45,10 +46,12 @@ struct MainContext {
   GLXFBConfig glxFBConfig;
   GLXDrawable glxDrawable;
   GLXContext glxContext;
+  float dpi_scale;
 };
 
 #else
 struct MainContext {
+  float dpi_scale;
 };
 #endif
 

@@ -109,6 +109,8 @@ int main(int argc, char *argv[]) {
       return 0;
   }
 
+  SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK) != 0) {
     hyper::Log::E("Failed to initialize SDL: %s\n", SDL_GetError());
     return 1;
@@ -183,6 +185,10 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
+  float ddpi, hdpi, vdpi;
+  SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(ctx.window), &ddpi, &hdpi, &vdpi);
+  main_context.dpi_scale = hdpi / 96.0f;  // 96 DPI = 100% scaling on Windows
+
   GLenum err = glewInit();
   if (GLEW_OK != err) {
     hyper::Log::E("Error: %s\n", glewGetErrorString(err));
@@ -237,10 +243,9 @@ int main(int argc, char *argv[]) {
     }
 
     SDL_GL_MakeCurrent(ctx.window, ctx.gl_context);
-
-    int width, height;
-    SDL_GetWindowSize(ctx.window, &width, &height);
-    if (!app->Render(dt, glm::ivec2(width, height))) {
+    int pixel_width, pixel_height;
+    SDL_GL_GetDrawableSize(ctx.window, &pixel_width, &pixel_height);
+    if (!app->Render(dt, glm::ivec2(pixel_width, pixel_height))) {
       hyper::Log::E("AppBase::Render failed!\n");
       return 1;
     }

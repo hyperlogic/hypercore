@@ -266,6 +266,146 @@ static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureT
   return result;
 }
 
+static std::shared_ptr<UberMaterial> BuildPbrMaterial(
+    UberShaderCache& shader_cache,
+    const aiMaterial* material,
+    bool has_bones,
+    bool has_vertex_colors,
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
+  std::string mat_name = material->GetName().C_Str();
+  auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec, asset_filename);
+  auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec, asset_filename);
+  auto metallic_roughness_tex_info = LoadTextureInfoFromMat(material, aiTextureType_GLTF_METALLIC_ROUGHNESS,
+                                                              image_vec, asset_filename);
+  UberShaderVariantKey key = 0;
+  if (base_color_tex_info.texture) {
+    key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
+    if (base_color_tex_info.uv_index == 0) {
+      key |= UberShaderVariantFlags::HAS_UV0;
+    } else if (base_color_tex_info.uv_index == 1) {
+      key |= UberShaderVariantFlags::HAS_UV1;
+    } else {
+      Log::W("base_texture using more then two texcoords (%d)\n", base_color_tex_info.uv_index);
+    }
+    if (base_color_tex_info.has_uv_transform) {
+      key |= UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM;
+    }
+  }
+  if (emissive_color_tex_info.texture) {
+    key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
+    if (emissive_color_tex_info.uv_index == 0) {
+      key |= UberShaderVariantFlags::HAS_UV0;
+    } else if (emissive_color_tex_info.uv_index == 1) {
+      key |= UberShaderVariantFlags::HAS_UV1;
+    } else {
+      Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_tex_info.uv_index);
+    }
+    if (emissive_color_tex_info.has_uv_transform) {
+      key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM;
+    }
+  }
+  if (metallic_roughness_tex_info.texture) {
+    key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE;
+    if (metallic_roughness_tex_info.uv_index == 0) {
+      key |= UberShaderVariantFlags::HAS_UV0;
+    } else if (emissive_color_tex_info.uv_index == 1) {
+      key |= UberShaderVariantFlags::HAS_UV1;
+    } else {
+      Log::W("metallic_roughness_texture using more then two texcoords (%d)\n", metallic_roughness_tex_info.uv_index);
+    }
+    if (metallic_roughness_tex_info.has_uv_transform) {
+      key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM;
+    }
+  }
+  if (has_bones) {
+    key |= UberShaderVariantFlags::HAS_BONES;
+  }
+  if (has_vertex_colors) {
+    key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
+  }
+
+  auto prog = shader_cache.GetOrCreate(key);
+  auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
+
+  float opacity = 1.0f;
+  material->Get(AI_MATKEY_OPACITY, opacity);
+
+  aiColor3D base_color_factor(1.0f, 1.0f, 1.0f);
+  material->Get(AI_MATKEY_BASE_COLOR, base_color_factor);
+  glm::vec4 v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
+  mat->SetBaseColorFactor(v4);
+
+  if (base_color_tex_info.texture) {
+    mat->SetBaseColorTexture(base_color_tex_info.texture);
+    mat->SetBaseColorUvIndex(base_color_tex_info.uv_index);
+    if (base_color_tex_info.has_uv_transform) {
+      mat->SetBaseColorUvOffset(base_color_tex_info.uv_offset);
+      mat->SetBaseColorUvScale(base_color_tex_info.uv_scale);
+      mat->SetBaseColorUvRotation(base_color_tex_info.uv_rotation);
+    }
+  }
+
+  if (emissive_color_tex_info.texture) {
+    mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
+    mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
+    if (emissive_color_tex_info.has_uv_transform) {
+      mat->SetEmissiveColorUvOffset(emissive_color_tex_info.uv_offset);
+      mat->SetEmissiveColorUvScale(emissive_color_tex_info.uv_scale);
+      mat->SetEmissiveColorUvRotation(emissive_color_tex_info.uv_rotation);
+    }
+  }
+
+  float metallic_factor(0.0f);
+  material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
+  mat->SetMetallicFactor(metallic_factor);
+
+  float roughness_factor(1.0f);
+  material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+  mat->SetRoughnessFactor(roughness_factor);
+
+  if (metallic_roughness_tex_info.texture) {
+    mat->SetMetallicRoughnessTexture(metallic_roughness_tex_info.texture);
+    mat->SetMetallicRoughnessUvIndex(metallic_roughness_tex_info.uv_index);
+    if (metallic_roughness_tex_info.has_uv_transform) {
+      mat->SetMetallicRoughnessUvOffset(metallic_roughness_tex_info.uv_offset);
+      mat->SetMetallicRoughnessUvScale(metallic_roughness_tex_info.uv_scale);
+      mat->SetMetallicRoughnessUvRotation(metallic_roughness_tex_info.uv_rotation);
+    }
+  }
+
+  aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
+  glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
+  mat->SetEmissiveColorFactor(v3);
+
+  return mat;
+}
+
+static std::shared_ptr<UberMaterial> BuildDefaultMaterial(
+    UberShaderCache& shader_cache,
+    const aiMaterial* material,
+    bool has_bones,
+    bool has_vertex_colors,
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
+  std::string mat_name = material->GetName().C_Str();
+  UberShaderVariantKey key = 0;
+  if (has_bones) {
+    key |= UberShaderVariantFlags::HAS_BONES;
+  }
+  if (has_vertex_colors) {
+    key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
+  }
+  auto prog = shader_cache.GetOrCreate(key);
+  auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
+
+  mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+  mat->SetEmissiveColorFactor(glm::vec3(1.0f, 1.0f, 1.0f));
+
+  return mat;
+}
+
 static std::shared_ptr<UberMaterial> BuildMaterial(
     UberShaderCache& shader_cache,
     const aiMaterial* material,
@@ -275,136 +415,20 @@ static std::shared_ptr<UberMaterial> BuildMaterial(
     const std::string& asset_filename) {
   assert(material);
 
-  std::string mat_name = material->GetName().C_Str();
-
   int32_t shading_model = -1;
   material->Get(AI_MATKEY_SHADING_MODEL, &shading_model, nullptr);
-  if (shading_model == aiShadingMode_PBR_BRDF) {
-    auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_BASE_COLOR, image_vec, asset_filename);
-    auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec, asset_filename);
-    auto metallic_roughness_tex_info = LoadTextureInfoFromMat(material, aiTextureType_GLTF_METALLIC_ROUGHNESS,
-                                                              image_vec, asset_filename);
-    UberShaderVariantKey key = 0;
-    if (base_color_tex_info.texture) {
-      key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
-      if (base_color_tex_info.uv_index == 0) {
-        key |= UberShaderVariantFlags::HAS_UV0;
-      } else if (base_color_tex_info.uv_index == 1) {
-        key |= UberShaderVariantFlags::HAS_UV1;
-      } else {
-        Log::W("base_texture using more then two texcoords (%d)\n", base_color_tex_info.uv_index);
+
+  switch (shading_model) {
+    case aiShadingMode_PBR_BRDF:
+      return BuildPbrMaterial(shader_cache, material, has_bones, has_vertex_colors, image_vec, asset_filename);
+    default: {
+      const char* shading_model_str = "????";
+      if (shading_model >= 0 && shading_model <= aiShadingMode_PBR_BRDF) {
+        shading_model_str = shading_models[shading_model];
       }
-      if (base_color_tex_info.has_uv_transform) {
-        key |= UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM;
-      }
+      Log::W("unsupported shading model %s (%d)\n", shading_model_str, shading_model);
+      return BuildDefaultMaterial(shader_cache, material, has_bones, has_vertex_colors, image_vec, asset_filename);
     }
-    if (emissive_color_tex_info.texture) {
-      key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
-      if (emissive_color_tex_info.uv_index == 0) {
-        key |= UberShaderVariantFlags::HAS_UV0;
-      } else if (emissive_color_tex_info.uv_index == 1) {
-        key |= UberShaderVariantFlags::HAS_UV1;
-      } else {
-        Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_tex_info.uv_index);
-      }
-      if (emissive_color_tex_info.has_uv_transform) {
-        key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM;
-      }
-    }
-    if (metallic_roughness_tex_info.texture) {
-      key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE;
-      if (metallic_roughness_tex_info.uv_index == 0) {
-        key |= UberShaderVariantFlags::HAS_UV0;
-      } else if (emissive_color_tex_info.uv_index == 1) {
-        key |= UberShaderVariantFlags::HAS_UV1;
-      } else {
-        Log::W("metallic_roughness_texture using more then two texcoords (%d)\n", metallic_roughness_tex_info.uv_index);
-      }
-      if (metallic_roughness_tex_info.has_uv_transform) {
-        key |= UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE_UV_TRANSFORM;
-      }
-    }
-    if (has_bones) {
-      key |= UberShaderVariantFlags::HAS_BONES;
-    }
-    if (has_vertex_colors) {
-      key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
-    }
-
-    auto prog = shader_cache.GetOrCreate(key);
-    auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
-
-    float opacity = 1.0f;
-    material->Get(AI_MATKEY_OPACITY, opacity);
-
-    aiColor3D base_color_factor(1.0f, 1.0f, 1.0f);
-    material->Get(AI_MATKEY_BASE_COLOR, base_color_factor);
-    glm::vec4 v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
-    mat->SetBaseColorFactor(v4);
-
-    if (base_color_tex_info.texture) {
-      mat->SetBaseColorTexture(base_color_tex_info.texture);
-      mat->SetBaseColorUvIndex(base_color_tex_info.uv_index);
-      if (base_color_tex_info.has_uv_transform) {
-        mat->SetBaseColorUvOffset(base_color_tex_info.uv_offset);
-        mat->SetBaseColorUvScale(base_color_tex_info.uv_scale);
-        mat->SetBaseColorUvRotation(base_color_tex_info.uv_rotation);
-      }
-    }
-
-    if (emissive_color_tex_info.texture) {
-      mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
-      mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
-      if (emissive_color_tex_info.has_uv_transform) {
-        mat->SetEmissiveColorUvOffset(emissive_color_tex_info.uv_offset);
-        mat->SetEmissiveColorUvScale(emissive_color_tex_info.uv_scale);
-        mat->SetEmissiveColorUvRotation(emissive_color_tex_info.uv_rotation);
-      }
-    }
-
-    float metallic_factor(0.0f);
-    material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
-    mat->SetMetallicFactor(metallic_factor);
-
-    float roughness_factor(1.0f);
-    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
-    mat->SetRoughnessFactor(roughness_factor);
-
-    if (metallic_roughness_tex_info.texture) {
-      mat->SetMetallicRoughnessTexture(metallic_roughness_tex_info.texture);
-      mat->SetMetallicRoughnessUvIndex(metallic_roughness_tex_info.uv_index);
-      if (metallic_roughness_tex_info.has_uv_transform) {
-        mat->SetMetallicRoughnessUvOffset(metallic_roughness_tex_info.uv_offset);
-        mat->SetMetallicRoughnessUvScale(metallic_roughness_tex_info.uv_scale);
-        mat->SetMetallicRoughnessUvRotation(metallic_roughness_tex_info.uv_rotation);
-      }
-    }
-
-    aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
-    material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
-    glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
-    mat->SetEmissiveColorFactor(v3);
-
-
-    return mat;
-  } else {
-    const char* shading_model_str = "????";
-    if (shading_model >= 0 && shading_model <= aiShadingMode_PBR_BRDF) {
-      shading_model_str = shading_models[shading_model];
-    }
-    Log::W("unsupported shading model %s (%d)\n", shading_model_str, shading_model);
-
-    UberShaderVariantKey key = 0;
-    if (has_bones) {
-      key |= UberShaderVariantFlags::HAS_BONES;
-    }
-    auto prog = shader_cache.GetOrCreate(key);
-    auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
-
-    mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    mat->SetEmissiveColorFactor(glm::vec3(1.0f, 1.0f, 1.0f));
-
-    return mat;
   }
 }
 
@@ -1022,5 +1046,4 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
 
   return asset;
 }
-
 }  // namespace hyper

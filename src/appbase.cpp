@@ -633,10 +633,9 @@ void AppBase::InitImGui() {
     io.IniFilename = imgui_ini_path_.c_str();
   }
 
-#ifdef __linux__
-  // font is too small on linux
-  io.FontGlobalScale = 2.0f;  // Scale everything by 2x
-#endif
+  // scale text for readability.
+  Log::D("dpi_scale = %.5f\n", main_context_.dpi_scale);
+  io.FontGlobalScale = main_context_.dpi_scale;
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();

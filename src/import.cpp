@@ -974,8 +974,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
     image_vec.push_back(BuildTextureImage(scene->mTextures[i]));
   }
 
-  // TODO(AJT): share shader cache across all importers?
-  UberShaderCache shader_cache;
+  UberShaderCache& shader_cache = UberShaderCache::Get();
 
   asset->mesh_vec.reserve(scene->mNumMeshes);
   for (uint32_t i = 0; i < scene->mNumMeshes; i++) {

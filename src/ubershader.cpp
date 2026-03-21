@@ -12,6 +12,11 @@
 
 namespace hyper {
 
+UberShaderCache& UberShaderCache::Get() {
+  static UberShaderCache instance;
+  return instance;
+}
+
 UberShaderCache::UberShaderCache() {
 }
 UberShaderCache::~UberShaderCache() {

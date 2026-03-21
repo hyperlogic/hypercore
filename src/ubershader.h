@@ -48,7 +48,8 @@ inline constexpr uint32_t& operator|=(uint32_t& a, UberShaderVariantFlags b) {
 
 class UberShaderCache {
  public:
-  UberShaderCache();
+  static UberShaderCache& Get();
+
   virtual ~UberShaderCache();
 
   DISABLE_COPY_AND_MOVE(UberShaderCache);
@@ -56,6 +57,7 @@ class UberShaderCache {
   std::shared_ptr<Program> GetOrCreate(const UberShaderVariantKey);
 
  protected:
+  UberShaderCache();
   std::unordered_map<UberShaderVariantKey, std::shared_ptr<Program>> program_vec_;
 };
 

@@ -39,6 +39,17 @@ UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& pr
 UberMaterial::~UberMaterial() {
 }
 
+std::shared_ptr<UberMaterial> UberMaterial::Make(UberShaderCache& shader_cache, glm::vec3 base_color,
+                                                 float roughness, float metallic) {
+  UberShaderVariantKey key = 0;
+  auto prog = shader_cache.GetOrCreate(key);
+  auto mat = std::make_shared<UberMaterial>("generated", prog, key);
+  mat->SetBaseColorFactor(glm::vec4(base_color, 1.0f));
+  mat->SetMetallicFactor(metallic);
+  mat->SetRoughnessFactor(roughness);
+  return mat;
+}
+
 void UberMaterial::Bind() const {
   prog_->Bind();
 

@@ -130,7 +130,7 @@ std::shared_ptr<Mesh> Mesh::MakeCylinder(const std::shared_ptr<UberMaterial>& ma
     float t = static_cast<float>(ring) / static_cast<float>(num_rings);
     glm::vec3 center = start + axis * t;
     for (int seg = 0; seg <= num_circle_subdivs; seg++) {
-      float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
+      float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
       glm::vec3 normal = u * std::cos(angle) + v * std::sin(angle);
       positions.push_back(center + normal * radius);
       normals.push_back(normal);
@@ -158,7 +158,7 @@ std::shared_ptr<Mesh> Mesh::MakeCylinder(const std::shared_ptr<UberMaterial>& ma
   // Start cap - duplicate ring 0 verts with cap normal.
   uint32_t start_ring_base = static_cast<uint32_t>(positions.size());
   for (int seg = 0; seg <= num_circle_subdivs; seg++) {
-    float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
+    float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
     glm::vec3 offset = u * std::cos(angle) + v * std::sin(angle);
     positions.push_back(start + offset * radius);
     normals.push_back(-axis_dir);
@@ -173,7 +173,7 @@ std::shared_ptr<Mesh> Mesh::MakeCylinder(const std::shared_ptr<UberMaterial>& ma
   // End cap - duplicate last ring verts with cap normal.
   uint32_t end_ring_base = static_cast<uint32_t>(positions.size());
   for (int seg = 0; seg <= num_circle_subdivs; seg++) {
-    float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
+    float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
     glm::vec3 offset = u * std::cos(angle) + v * std::sin(angle);
     positions.push_back(end + offset * radius);
     normals.push_back(axis_dir);
@@ -228,7 +228,7 @@ std::shared_ptr<Mesh> Mesh::MakeCone(const std::shared_ptr<UberMaterial>& mat,
     glm::vec3 center = start + axis * t;
     float ring_radius = radius * (1.0f - t);
     for (int seg = 0; seg <= num_circle_subdivs; seg++) {
-      float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
+      float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
       glm::vec3 radial = u * std::cos(angle) + v * std::sin(angle);
       // Surface normal points outward and slightly toward the tip.
       glm::vec3 normal = radial * cos_slope + axis_dir * sin_slope;
@@ -254,7 +254,7 @@ std::shared_ptr<Mesh> Mesh::MakeCone(const std::shared_ptr<UberMaterial>& mat,
 
   uint32_t cap_ring_base = static_cast<uint32_t>(positions.size());
   for (int seg = 0; seg <= num_circle_subdivs; seg++) {
-    float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
+    float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_circle_subdivs);
     glm::vec3 offset = u * std::cos(angle) + v * std::sin(angle);
     positions.push_back(start + offset * radius);
     normals.push_back(-axis_dir);

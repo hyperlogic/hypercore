@@ -58,6 +58,9 @@ std::shared_ptr<Program> UberShaderCache::GetOrCreate(const UberShaderVariantKey
     if (key & UberShaderVariantFlags::HAS_VERTEX_COLORS) {
       mat_info += "#define HAS_VERTEX_COLORS\n";
     }
+    if (key & UberShaderVariantFlags::HAS_SPECULAR) {
+      mat_info += "#define HAS_SPECULAR\n";
+    }
     prog->AddMacro("MATERIALINFO", mat_info);
     if (!prog->LoadVertFrag("shader/uber_vert.glsl", "shader/uber_frag.glsl")) {
       Log::E("Error loading uber shader! key = 0x%x\n", key);

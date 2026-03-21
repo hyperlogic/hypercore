@@ -33,7 +33,9 @@ UberMaterial::UberMaterial(const std::string& name, std::shared_ptr<Program>& pr
       emissive_color_uv_index_(),
       emissive_color_uv_offset_(0.0f, 0.0f),
       emissive_color_uv_scale_(0.0f, 0.0f),
-      emissive_color_uv_rotation_(0.0f) {
+      emissive_color_uv_rotation_(0.0f),
+      specular_color_factor_(0.5f, 0.5f, 0.5f),
+      specular_exponent_(32.0f) {
 }
 
 UberMaterial::~UberMaterial() {
@@ -67,8 +69,11 @@ void UberMaterial::Bind() const {
     }
   }
 
-  prog_->SetUniform("metallic_factor", metallic_factor_);
-  prog_->SetUniform("roughness_factor", roughness_factor_);
+  if (!(key_ & UberShaderVariantFlags::HAS_SPECULAR)) {
+    prog_->SetUniform("metallic_factor", metallic_factor_);
+    prog_->SetUniform("roughness_factor", roughness_factor_);
+  }
+
   if (key_ & UberShaderVariantFlags::HAS_METALLIC_ROUGHNESS_TEXTURE) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, metallic_roughness_tex_->texture);
@@ -92,6 +97,11 @@ void UberMaterial::Bind() const {
       prog_->SetUniform("emissive_color_uv_scale", emissive_color_uv_scale_);
       prog_->SetUniform("emissive_color_uv_rotation", emissive_color_uv_rotation_);
     }
+  }
+
+  if (key_ & UberShaderVariantFlags::HAS_SPECULAR) {
+    prog_->SetUniform("specular_color_factor", specular_color_factor_);
+    prog_->SetUniform("specular_exponent", specular_exponent_);
   }
 }
 

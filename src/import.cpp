@@ -266,6 +266,114 @@ static TextureInfo LoadTextureInfoFromMat(const aiMaterial* material, aiTextureT
   return result;
 }
 
+static std::shared_ptr<UberMaterial> BuildDefaultMaterial(
+    UberShaderCache& shader_cache,
+    const aiMaterial* material,
+    bool has_bones,
+    bool has_vertex_colors,
+    const std::vector<std::shared_ptr<Image>>& image_vec,
+    const std::string& asset_filename) {
+
+  std::string mat_name = material->GetName().C_Str();
+  auto base_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_DIFFUSE, image_vec, asset_filename);
+  auto emissive_color_tex_info = LoadTextureInfoFromMat(material, aiTextureType_EMISSIVE, image_vec, asset_filename);
+
+  bool has_specular = false;
+  aiColor3D specular_color_factor(1.0f, 1.0f, 1.0f);
+  if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular_color_factor) == aiReturn_SUCCESS) {
+    has_specular = true;
+  }
+
+  UberShaderVariantKey key = 0;
+  if (base_color_tex_info.texture) {
+    key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
+    key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
+    if (base_color_tex_info.uv_index == 0) {
+      key |= UberShaderVariantFlags::HAS_UV0;
+    } else if (base_color_tex_info.uv_index == 1) {
+      key |= UberShaderVariantFlags::HAS_UV1;
+    } else {
+      Log::W("base_texture using more then two texcoords (%d)\n", base_color_tex_info.uv_index);
+    }
+    if (base_color_tex_info.has_uv_transform) {
+      key |= UberShaderVariantFlags::HAS_BASE_TEXTURE_UV_TRANSFORM;
+    }
+  }
+  if (emissive_color_tex_info.texture) {
+    key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE;
+    if (emissive_color_tex_info.uv_index == 0) {
+      key |= UberShaderVariantFlags::HAS_UV0;
+    } else if (emissive_color_tex_info.uv_index == 1) {
+      key |= UberShaderVariantFlags::HAS_UV1;
+    } else {
+      Log::W("emissive_texture using more then two texcoords (%d)\n", emissive_color_tex_info.uv_index);
+    }
+    if (emissive_color_tex_info.has_uv_transform) {
+      key |= UberShaderVariantFlags::HAS_EMISSIVE_TEXTURE_UV_TRANSFORM;
+    }
+  }
+  if (has_bones) {
+    key |= UberShaderVariantFlags::HAS_BONES;
+  }
+  if (has_vertex_colors) {
+    key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
+  }
+  if (has_specular) {
+    key |= UberShaderVariantFlags::HAS_SPECULAR;
+  }
+
+  auto prog = shader_cache.GetOrCreate(key);
+  auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
+
+  float opacity = 1.0f;
+  material->Get(AI_MATKEY_OPACITY, opacity);
+
+  aiColor3D base_color_factor(1.0f, 1.0f, 1.0f);
+  material->Get(AI_MATKEY_BASE_COLOR, base_color_factor);
+  glm::vec4 tmp_v4(base_color_factor.r, base_color_factor.g, base_color_factor.b, opacity);
+  mat->SetBaseColorFactor(tmp_v4);
+
+  if (base_color_tex_info.texture) {
+    mat->SetBaseColorTexture(base_color_tex_info.texture);
+    mat->SetBaseColorUvIndex(base_color_tex_info.uv_index);
+    if (base_color_tex_info.has_uv_transform) {
+      mat->SetBaseColorUvOffset(base_color_tex_info.uv_offset);
+      mat->SetBaseColorUvScale(base_color_tex_info.uv_scale);
+      mat->SetBaseColorUvRotation(base_color_tex_info.uv_rotation);
+    }
+  }
+
+  aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
+  glm::vec3 e(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
+  mat->SetEmissiveColorFactor(e);
+
+  if (emissive_color_tex_info.texture) {
+    mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
+    mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
+    if (emissive_color_tex_info.has_uv_transform) {
+      mat->SetEmissiveColorUvOffset(emissive_color_tex_info.uv_offset);
+      mat->SetEmissiveColorUvScale(emissive_color_tex_info.uv_scale);
+      mat->SetEmissiveColorUvRotation(emissive_color_tex_info.uv_rotation);
+    }
+  }
+
+  if (has_specular) {
+    aiColor3D specular_color_factor(1.0f, 1.0f, 1.0f);
+    material->Get(AI_MATKEY_COLOR_SPECULAR, specular_color_factor);
+    glm::vec3 s(specular_color_factor.r, specular_color_factor.g, specular_color_factor.b);
+    mat->SetSpecularColorFactor(s);
+
+    float shininess = 0.0f;
+    material->Get(AI_MATKEY_SHININESS, shininess);
+    shininess = glm::clamp(shininess / 1000.0f, 0.0f, 1.0f);
+    float exp = powf(2.0f, shininess * 10.0f);  // map 0..1 to an exponent.
+    mat->SetSpecularExponent(exp);
+  }
+
+  return mat;
+}
+
 static std::shared_ptr<UberMaterial> BuildPbrMaterial(
     UberShaderCache& shader_cache,
     const aiMaterial* material,
@@ -346,6 +454,11 @@ static std::shared_ptr<UberMaterial> BuildPbrMaterial(
     }
   }
 
+  aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
+  material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
+  glm::vec3 e(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
+  mat->SetEmissiveColorFactor(e);
+
   if (emissive_color_tex_info.texture) {
     mat->SetEmissiveColorTexture(emissive_color_tex_info.texture);
     mat->SetEmissiveColorUvIndex(emissive_color_tex_info.uv_index);
@@ -373,35 +486,6 @@ static std::shared_ptr<UberMaterial> BuildPbrMaterial(
       mat->SetMetallicRoughnessUvRotation(metallic_roughness_tex_info.uv_rotation);
     }
   }
-
-  aiColor3D emissive_color_factor(0.0f, 0.0f, 0.0f);
-  material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive_color_factor);
-  glm::vec3 v3(emissive_color_factor.r, emissive_color_factor.g, emissive_color_factor.b);
-  mat->SetEmissiveColorFactor(v3);
-
-  return mat;
-}
-
-static std::shared_ptr<UberMaterial> BuildDefaultMaterial(
-    UberShaderCache& shader_cache,
-    const aiMaterial* material,
-    bool has_bones,
-    bool has_vertex_colors,
-    const std::vector<std::shared_ptr<Image>>& image_vec,
-    const std::string& asset_filename) {
-  std::string mat_name = material->GetName().C_Str();
-  UberShaderVariantKey key = 0;
-  if (has_bones) {
-    key |= UberShaderVariantFlags::HAS_BONES;
-  }
-  if (has_vertex_colors) {
-    key |= UberShaderVariantFlags::HAS_VERTEX_COLORS;
-  }
-  auto prog = shader_cache.GetOrCreate(key);
-  auto mat = std::make_shared<UberMaterial>(mat_name, prog, key);
-
-  mat->SetBaseColorFactor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-  mat->SetEmissiveColorFactor(glm::vec3(1.0f, 1.0f, 1.0f));
 
   return mat;
 }
@@ -661,7 +745,6 @@ static std::shared_ptr<Mesh> BuildBoneMesh(
   auto boneMesh = std::make_shared<BoneMesh>(vao, mat, node, inv_bind_pose_vec);
   return boneMesh;
 }
-
 
 // Convert FBX TimeMode to frame rate (matches Assimp's FrameRateToDouble)
 static double TimeModeToFrameRate(int time_mode, double custom_fps) {

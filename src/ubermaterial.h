@@ -91,6 +91,11 @@ class UberMaterial {
   void SetEmissiveColorUvRotation(float uv_rotation) { emissive_color_uv_rotation_ = uv_rotation; }
   float GetEmissiveColorUvRotation() const { return emissive_color_uv_rotation_; }
 
+  void SetSpecularColorFactor(glm::vec3 specular_color_factor) { specular_color_factor_ = specular_color_factor; }
+  glm::vec3 GetSpecularColorFactor() const { return specular_color_factor_; }
+  void SetSpecularExponent(float specular_exponent) { specular_exponent_ = specular_exponent; }
+  float GetSpecularExponent() const { return specular_exponent_; }
+
  protected:
   std::string name_;
   UberShaderVariantKey key_;
@@ -119,6 +124,9 @@ class UberMaterial {
   glm::vec2 emissive_color_uv_offset_;
   glm::vec2 emissive_color_uv_scale_;
   float emissive_color_uv_rotation_;
+
+  glm::vec3 specular_color_factor_;
+  float specular_exponent_;
 };
 
 }  // namespace hyper

@@ -52,6 +52,10 @@ uniform vec4 base_color_factor;
 uniform float metallic_factor;
 uniform float roughness_factor;
 uniform vec3 emissive_color_factor;
+#ifdef HAS_SPECULAR
+uniform vec3 specular_color_factor;
+uniform float specular_exponent;
+#endif
 
 in vec3 frag_position;
 in vec3 frag_normal;
@@ -162,7 +166,11 @@ void main() {
   float ndoth = ClampedDot(n, h);
   float vdoth = ClampedDot(v, h);
 
-  float lightIntensity = 4.0;
+#ifdef HAS_SPECULAR
+  float light_intensity = 1.0;
+#else
+  float light_intensity = 4.0;
+#endif
 
 #ifdef HAS_BASE_TEXTURE
 #ifdef HAS_BASE_TEXTURE_UV_TRANSFORM
@@ -202,18 +210,25 @@ void main() {
   float roughness = roughness_factor;
 #endif
 
+#ifdef HAS_SPECULAR
+  // phong
+  vec3 f_diffuse = base_color.rgb;
+  float spec = pow(ndoth, specular_exponent);
+  vec3 f_specular = specular_color_factor * spec;
+#else
   // PBR metallic-roughness (glTF 2.0 spec)
   vec3 c_diff = base_color.rgb * (1.0 - 0.04) * (1.0 - metallic);
   vec3 f0 = mix(vec3(0.04), base_color.rgb, metallic);
   vec3 f90 = vec3(1.0);
   float alpha_roughness = roughness * roughness;
 
-  vec3 F_specular = F_Schlick(f0, f90, abs(vdoth));
   vec3 F_diffuse = F_Schlick(f0, f90, ndotv);
   vec3 f_diffuse = (1.0 - F_diffuse) * BRDF_lambertian(c_diff);
-  vec3 f_specular = F_specular * BRDF_specularGGX(alpha_roughness, ndotl, ndotv, ndoth);
 
-  vec3 l_color = (f_diffuse + f_specular) * lightIntensity * light_direct_color * ndotl;
+  vec3 F_specular = F_Schlick(f0, f90, abs(vdoth));
+  vec3 f_specular = F_specular * BRDF_specularGGX(alpha_roughness, ndotl, ndotv, ndoth);
+#endif
+  vec3 l_color = (f_diffuse + f_specular) * light_intensity * light_direct_color * ndotl;
 
 #ifdef HAS_EMISSIVE_TEXTURE
 #ifdef HAS_EMISSIVE_TEXTURE_UV_TRANSFORM
@@ -229,8 +244,12 @@ void main() {
   vec3 emissive_color = emissive_color_factor;
 #endif
 
-  //vec3 ambient = light_ambient_color * (c_diff + f0);
-  vec3 ambient = light_ambient_color * ((1.0 - F_diffuse) * c_diff + F_diffuse);
+#ifdef HAS_SPECULAR
+  vec3 ambient = f_diffuse * light_ambient_color;
+#else
+  vec3 ambient = light_ambient_color * (c_diff + f0);
+  //vec3 ambient = light_ambient_color * ((1.0 - F_diffuse) * c_diff + F_diffuse);
+#endif
   vec3 final_color = ambient + l_color + emissive_color;
 
   // premultiplied alpha blending

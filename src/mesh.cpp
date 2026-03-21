@@ -284,7 +284,7 @@ std::shared_ptr<Mesh> Mesh::MakeBoneOctahedron(const std::shared_ptr<UberMateria
                                                glm::vec3 start, glm::vec3 end, float radius) {
   glm::vec3 axis = end - start;
   glm::vec3 axis_dir = glm::normalize(axis);
-  glm::vec3 center = (start + end) * 0.5f;
+  glm::vec3 center = glm::mix(start, end, 0.25f);
 
   // Build an orthonormal basis around the axis.
   glm::vec3 up = (std::abs(glm::dot(axis_dir, glm::vec3(0, 1, 0))) < 0.99f)
@@ -303,11 +303,11 @@ std::shared_ptr<Mesh> Mesh::MakeBoneOctahedron(const std::shared_ptr<UberMateria
   };
 
   // 8 triangular faces. Each face gets its own 3 vertices with a flat normal.
-  // Start-half faces: 0-2-3, 0-3-4, 0-4-5, 0-5-2
-  // End-half faces:   1-3-2, 1-4-3, 1-5-4, 1-2-5
+  // Start-half faces: 0-3-2, 0-4-3, 0-5-4, 0-2-5
+  // End-half faces:   1-2-3, 1-3-4, 1-4-5, 1-5-2
   uint32_t faces[8][3] = {
-      {0, 2, 3}, {0, 3, 4}, {0, 4, 5}, {0, 5, 2},
-      {1, 3, 2}, {1, 4, 3}, {1, 5, 4}, {1, 2, 5},
+      {0, 3, 2}, {0, 4, 3}, {0, 5, 4}, {0, 2, 5},
+      {1, 2, 3}, {1, 3, 4}, {1, 4, 5}, {1, 5, 2},
   };
 
   std::vector<glm::vec3> positions;

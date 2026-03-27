@@ -26,8 +26,8 @@ class Mesh {
        std::shared_ptr<Node> node);
 
   static std::shared_ptr<Mesh> MakeSphere(const std::shared_ptr<UberMaterial>& mat,
-                                           const std::shared_ptr<Node>& node,
-                                           glm::vec3 center, float radius, int num_subdivs);
+                                          const std::shared_ptr<Node>& node,
+                                          glm::vec3 center, float radius, int num_subdivs);
   static std::shared_ptr<Mesh> MakeCylinder(const std::shared_ptr<UberMaterial>& mat,
                                             const std::shared_ptr<Node>& node,
                                             glm::vec3 start, glm::vec3 end, float radius,

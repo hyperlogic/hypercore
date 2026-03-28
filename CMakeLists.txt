@@ -131,6 +131,7 @@ add_library(hypercore STATIC
     src/dynmesh.cpp
     src/flycam.cpp
     src/framebuffer.cpp
+    src/geom.cpp
     src/image.cpp
     src/import.cpp
     src/inputbuddy.cpp

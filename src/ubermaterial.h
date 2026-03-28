@@ -34,9 +34,9 @@ class UberMaterial {
 
   DISABLE_COPY_AND_MOVE(UberMaterial);
 
-  static std::shared_ptr<UberMaterial> Make(UberShaderCache& shader_cache, glm::vec3 base_color,
-                                            glm::vec3 emissive_color, float roughness, float metallic);
-
+  static std::shared_ptr<UberMaterial> Make(UberShaderCache& shader_cache, UberShaderVariantKey key,
+                                            glm::vec3 base_color, glm::vec3 emissive_color,
+                                            float roughness, float metallic);
   void Bind() const;
   const std::shared_ptr<Program>& prog() const { return prog_; }
   const std::string& name() const { return name_; }

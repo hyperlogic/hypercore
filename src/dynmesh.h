@@ -12,45 +12,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "src/node.h"
+#include "src/geom.h"
 
 namespace hyper {
 
-class UberMaterial;
 class BufferObject;
+class Node;
+class UberMaterial;
 class VertexArrayObject;
-
-class MeshAttribs {
- public:
-  std::vector<glm::vec3> pos_vec;
-  std::vector<glm::vec2> uv_vec;
-  std::vector<glm::vec3> norm_vec;
-  std::vector<glm::vec4> color_vec;
-  std::vector<uint32_t> index_vec;
-
-  void Clear() {
-    pos_vec.clear();
-    uv_vec.clear();
-    norm_vec.clear();
-    color_vec.clear();
-    index_vec.clear();
-  }
-
-  void Push(const MeshAttribs& mesh_attribs) {
-    size_t vertex_start = pos_vec.size();
-    pos_vec.insert(pos_vec.end(), mesh_attribs.pos_vec.begin(), mesh_attribs.pos_vec.end());
-    uv_vec.insert(uv_vec.end(), mesh_attribs.uv_vec.begin(), mesh_attribs.uv_vec.end());
-    norm_vec.insert(norm_vec.end(), mesh_attribs.norm_vec.begin(), mesh_attribs.norm_vec.end());
-    color_vec.insert(color_vec.end(), mesh_attribs.color_vec.begin(), mesh_attribs.color_vec.end());
-    size_t index_start = index_vec.size();
-    index_vec.insert(index_vec.end(), mesh_attribs.index_vec.begin(), mesh_attribs.index_vec.end());
-    for (size_t i = index_start; i < index_vec.size(); i++) {
-      index_vec[i] += vertex_start;
-    }
-  }
-
-  static MeshAttribs MakeSphere(glm::vec4 color, glm::vec3 center, float radius, int num_subdivs);
-};
 
 class DynMesh {
  public:
@@ -58,7 +27,7 @@ class DynMesh {
           std::shared_ptr<Node> node);
 
   void Clear();
-  void Push(const MeshAttribs& mesh_attribs);
+  void Push(const Geom& geom, glm::vec4 color);
 
   virtual void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
                       const glm::vec4& viewport, const glm::vec2& near_far);
@@ -68,7 +37,8 @@ class DynMesh {
 
   std::shared_ptr<UberMaterial> mat_;
   std::shared_ptr<Node> node_;
-  MeshAttribs batched_attribs_;
+  Geom geom_batch_;
+  std::vector<glm::vec4> color_batch_;
   bool dirty_;
   std::shared_ptr<BufferObject> pos_buffer_;
   std::shared_ptr<BufferObject> uv_buffer_;

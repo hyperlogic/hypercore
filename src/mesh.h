@@ -15,7 +15,6 @@
 
 namespace hyper {
 
-class Hierarchy;
 class UberMaterial;
 class VertexArrayObject;
 

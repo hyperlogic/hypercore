@@ -128,6 +128,7 @@ add_library(hypercore STATIC
     src/bonemesh.cpp
     src/checkerfloor.cpp
     src/debugrenderer.cpp
+    src/dynmesh.cpp
     src/flycam.cpp
     src/framebuffer.cpp
     src/image.cpp

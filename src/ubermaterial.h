@@ -40,6 +40,7 @@ class UberMaterial {
   void Bind() const;
   const std::shared_ptr<Program>& prog() const { return prog_; }
   const std::string& name() const { return name_; }
+  UberShaderVariantKey key() const { return key_; }
 
   void SetBaseColorFactor(glm::vec4 base_color_factor) { base_color_factor_ = base_color_factor; }
   glm::vec4 GetBaseColorFactor() const { return base_color_factor_; }

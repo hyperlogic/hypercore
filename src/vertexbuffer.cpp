@@ -187,14 +187,12 @@ void VertexArrayObject::Unbind() const {
   glBindVertexArray(0);
 }
 
-void VertexArrayObject::SetAttribBuffer(
-    int loc, std::shared_ptr<BufferObject> attrib_buffer) {
+void VertexArrayObject::SetAttribBuffer(int loc, std::shared_ptr<BufferObject> attrib_buffer) {
   assert(attrib_buffer->target_ == GL_ARRAY_BUFFER);
 
   Bind();
   attrib_buffer->Bind();
-  glVertexAttribPointer(loc, attrib_buffer->element_size_, GL_FLOAT, GL_FALSE,
-                        0, nullptr);
+  glVertexAttribPointer(loc, attrib_buffer->element_size_, GL_FLOAT, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(loc);
   attrib_buffer->Unbind();
   attrib_buffer_vec_.push_back(attrib_buffer);

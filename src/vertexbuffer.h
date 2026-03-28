@@ -65,6 +65,8 @@ class BufferObject {
   void Read(std::vector<uint32_t>& data);
 
   uint32_t GetObj() const { return obj_; }
+  int element_size() const { return element_size_; }
+  int num_elements() const { return num_elements_; }
 
  protected:
   int target_;

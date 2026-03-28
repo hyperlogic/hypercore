@@ -415,6 +415,8 @@ void Program::SetAttribRaw(int loc, glm::vec4* values, size_t stride) const {
   glEnableVertexAttribArray(loc);
 }
 
+
+
 void Program::Delete() {
   debug_name_ = "";
 

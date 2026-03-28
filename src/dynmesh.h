@@ -18,6 +18,7 @@ namespace hyper {
 
 class UberMaterial;
 class BufferObject;
+class VertexArrayObject;
 
 class MeshAttribs {
  public:
@@ -36,12 +37,19 @@ class MeshAttribs {
   }
 
   void Push(const MeshAttribs& mesh_attribs) {
+    size_t vertex_start = pos_vec.size();
     pos_vec.insert(pos_vec.end(), mesh_attribs.pos_vec.begin(), mesh_attribs.pos_vec.end());
     uv_vec.insert(uv_vec.end(), mesh_attribs.uv_vec.begin(), mesh_attribs.uv_vec.end());
     norm_vec.insert(norm_vec.end(), mesh_attribs.norm_vec.begin(), mesh_attribs.norm_vec.end());
     color_vec.insert(color_vec.end(), mesh_attribs.color_vec.begin(), mesh_attribs.color_vec.end());
+    size_t index_start = index_vec.size();
     index_vec.insert(index_vec.end(), mesh_attribs.index_vec.begin(), mesh_attribs.index_vec.end());
+    for (size_t i = index_start; i < index_vec.size(); i++) {
+      index_vec[i] += vertex_start;
+    }
   }
+
+  static MeshAttribs MakeSphere(glm::vec4 color, glm::vec3 center, float radius, int num_subdivs);
 };
 
 class DynMesh {
@@ -67,6 +75,7 @@ class DynMesh {
   std::shared_ptr<BufferObject> norm_buffer_;
   std::shared_ptr<BufferObject> color_buffer_;
   std::shared_ptr<BufferObject> index_buffer_;
+  std::shared_ptr<VertexArrayObject> vao_;
 };
 
 }  // namespace hyper

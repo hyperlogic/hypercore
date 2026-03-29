@@ -8,6 +8,8 @@
 #include <map>
 #include <utility>
 
+#include "src/util.h"
+
 namespace hyper {
 
 Geom::Geom() = default;
@@ -281,25 +283,44 @@ Geom Geom::MakeCone(glm::vec3 start, glm::vec3 end, float radius,
   return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
 }
 
-Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::vec3 end, float radius) {
+Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, float radius) {
   glm::vec3 axis = end - start;
-  glm::vec3 axis_dir = glm::normalize(axis);
+  glm::vec3 axis_dir = SafeNormalize(axis, glm::vec3(0.0f, 1.0f, 0.0f));
   glm::vec3 center = glm::mix(start, end, 0.25f);
 
   // Build an orthonormal basis around the axis.
-  glm::vec3 up = (std::abs(glm::dot(axis_dir, glm::vec3(0, 1, 0))) < 0.99f)
-                     ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
-  glm::vec3 u = glm::normalize(glm::cross(axis_dir, up));
+  glm::vec3 x = rot * glm::vec3(1.0, 0.0f, 0.0f);
+  glm::vec3 y = rot * glm::vec3(0.0, 1.0f, 0.0f);
+  glm::vec3 z = rot * glm::vec3(0.0, 0.0f, 1.0f);
+  float dx = std::abs(glm::dot(glm::normalize(x), axis_dir));
+  float dy = std::abs(glm::dot(glm::normalize(y), axis_dir));
+  float dz = std::abs(glm::dot(glm::normalize(z), axis_dir));
+
+  glm::vec3 secondary;
+  if (dx <= dy && dx <= dz) {
+    secondary = x;
+  } else if (dy <= dx && dy <= dz) {
+    secondary = y;
+  } else {
+    secondary = z;
+  }
+  glm::vec3 u = glm::normalize(glm::cross(axis_dir, secondary));
   glm::vec3 v = glm::cross(axis_dir, u);
 
   // 6 vertices: start tip, end tip, and 4 middle ring vertices.
   glm::vec3 verts[6] = {
       start,                   // 0: start tip
       end,                     // 1: end tip
+      /*
       center + u * radius,     // 2: +u
       center + v * radius,     // 3: +v
       center - u * radius,     // 4: -u
       center - v * radius,     // 5: -v
+      */
+      center + (u + v) * radius,  // 2: u+v
+      center + (-u + v) * radius,  // 3: -u+v
+      center + (-u - v) * radius,  // 4: -u-v
+      center + (u - v) * radius,  // 5: u-v
   };
 
   // 8 triangular faces. Each face gets its own 3 vertices with a flat normal.

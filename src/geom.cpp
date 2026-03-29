@@ -288,14 +288,16 @@ Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, flo
   glm::vec3 axis_dir = SafeNormalize(axis, glm::vec3(0.0f, 1.0f, 0.0f));
   glm::vec3 center = glm::mix(start, end, 0.25f);
 
-  // Build an orthonormal basis around the axis.
+  // Build an orthonormal basis around the primary axis and a secondary vector.
+  // Where the secondary vector is the local axis of rot that has the largest
+  // angle from the primary axis.
+  // This ensures that the faces of the octahedron face toward the local axis of the joint.
   glm::vec3 x = rot * glm::vec3(1.0, 0.0f, 0.0f);
   glm::vec3 y = rot * glm::vec3(0.0, 1.0f, 0.0f);
   glm::vec3 z = rot * glm::vec3(0.0, 0.0f, 1.0f);
   float dx = std::abs(glm::dot(glm::normalize(x), axis_dir));
   float dy = std::abs(glm::dot(glm::normalize(y), axis_dir));
   float dz = std::abs(glm::dot(glm::normalize(z), axis_dir));
-
   glm::vec3 secondary;
   if (dx <= dy && dx <= dz) {
     secondary = x;
@@ -309,18 +311,12 @@ Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, flo
 
   // 6 vertices: start tip, end tip, and 4 middle ring vertices.
   glm::vec3 verts[6] = {
-      start,                   // 0: start tip
-      end,                     // 1: end tip
-      /*
-      center + u * radius,     // 2: +u
-      center + v * radius,     // 3: +v
-      center - u * radius,     // 4: -u
-      center - v * radius,     // 5: -v
-      */
-      center + (u + v) * radius,  // 2: u+v
+      start,                       // 0: start tip
+      end,                         // 1: end tip
+      center + (u + v) * radius,   // 2: u+v
       center + (-u + v) * radius,  // 3: -u+v
       center + (-u - v) * radius,  // 4: -u-v
-      center + (u - v) * radius,  // 5: u-v
+      center + (u - v) * radius,   // 5: u-v
   };
 
   // 8 triangular faces. Each face gets its own 3 vertices with a flat normal.

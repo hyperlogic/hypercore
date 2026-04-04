@@ -16,11 +16,19 @@ uniform mat4 proj_mat;
 uniform mat3 normal_model_mat;
 
 #ifdef HAS_BONES
-#define MAX_BONES 200
 #define MAX_BONE_INFLUENCES 4  // Typically 4 bones per vertex
-uniform mat4 boneMats[MAX_BONES];
+uniform samplerBuffer boneMats;
 in vec4 boneWeights;
 in vec4 boneIndices;
+
+mat4 GetBoneMat(int index) {
+  // Each mat4 is stored as 4 consecutive RGBA32F texels.
+  int offset = index * 4;
+  return mat4(texelFetch(boneMats, offset),
+              texelFetch(boneMats, offset + 1),
+              texelFetch(boneMats, offset + 2),
+              texelFetch(boneMats, offset + 3));
+}
 #endif
 
 in vec4 position;
@@ -51,7 +59,7 @@ void main(void) {
 	for (int i = 0; i < MAX_BONE_INFLUENCES; i++)
 	{
 		int boneIndex = int(boneIndices[i]);
-		mat4 boneMat = boneMats[boneIndex];
+		mat4 boneMat = GetBoneMat(boneIndex);
 		skinnedPosition += boneWeights[i] * (boneMat * position);
 		skinnedNormal += boneWeights[i] * (mat3(boneMat) * normal);
 	}

@@ -19,8 +19,6 @@
 
 namespace hyper {
 
-#define MAX_BONES 200  // same as in bone_mesh_vert.glsl
-
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
 const glm::vec3 kLightColor(1.0f, 1.0f, 1.0f);
 const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.2f);
@@ -31,6 +29,33 @@ BoneMesh::BoneMesh(std::shared_ptr<VertexArrayObject> vao,
                    std::vector<glm::mat4> inv_bind_pose_vec)
     : Mesh(vao, mat, node),
       inv_bind_pose_vec_(inv_bind_pose_vec) {
+  InitTbo();
+}
+
+BoneMesh::~BoneMesh() {
+  if (bone_tbo_) {
+    glDeleteTextures(1, &bone_tbo_);
+  }
+  if (bone_buf_) {
+    glDeleteBuffers(1, &bone_buf_);
+  }
+}
+
+void BoneMesh::InitTbo() {
+  glGenBuffers(1, &bone_buf_);
+  glGenTextures(1, &bone_tbo_);
+
+  // Allocate initial storage for the buffer.
+  glBindBuffer(GL_TEXTURE_BUFFER, bone_buf_);
+  glBufferData(GL_TEXTURE_BUFFER,
+               inv_bind_pose_vec_.size() * sizeof(glm::mat4),
+               nullptr, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_TEXTURE_BUFFER, 0);
+
+  // Attach the buffer to the texture.
+  glBindTexture(GL_TEXTURE_BUFFER, bone_tbo_);
+  glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, bone_buf_);
+  glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
 void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
@@ -44,12 +69,18 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   // build the abs_xform_vec_ aka boneMats
   node_->BuildDepthFirstAbsXformVec(abs_xform_vec_);
   assert(abs_xform_vec_.size() == inv_bind_pose_vec_.size());
-  assert(abs_xform_vec_.size() <= MAX_BONES);
   // apply inv_bind_pose_vec_ for rendering
   for (size_t i = 0; i < abs_xform_vec_.size(); i++) {
     // AJT: TODO wtf, manny renders incorrectly, even in bind pose!
     abs_xform_vec_[i] *= inv_bind_pose_vec_[i];
   }
+
+  // Upload bone matrices to the TBO.
+  glBindBuffer(GL_TEXTURE_BUFFER, bone_buf_);
+  glBufferSubData(GL_TEXTURE_BUFFER, 0,
+                  abs_xform_vec_.size() * sizeof(glm::mat4),
+                  abs_xform_vec_.data());
+  glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
   mat_->Bind();
 
@@ -63,7 +94,11 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   mat_->prog()->SetUniform("light_direct_color", kLightColor);
   mat_->prog()->SetUniform("light_ambient_color", kAmbientColor);
 
-  mat_->prog()->SetUniform("boneMats[0]", abs_xform_vec_);
+  // Bind the bone matrix TBO to texture unit 4 (units 0-1 used by material).
+  static const int32_t kBoneTexUnit = 4;
+  glActiveTexture(GL_TEXTURE0 + kBoneTexUnit);
+  glBindTexture(GL_TEXTURE_BUFFER, bone_tbo_);
+  mat_->prog()->SetUniform("boneMats", kBoneTexUnit);
 
   vao_->DrawElements(GL_TRIANGLES);
 }

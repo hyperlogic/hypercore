@@ -23,6 +23,7 @@ class Mesh {
   Mesh(std::shared_ptr<VertexArrayObject> vao,
        std::shared_ptr<UberMaterial> mat,
        std::shared_ptr<Node> node);
+  virtual ~Mesh() = default;
 
   static std::shared_ptr<Mesh> MakeSphere(const std::shared_ptr<UberMaterial>& mat,
                                           const std::shared_ptr<Node>& node,

@@ -128,6 +128,7 @@ void BufferObject::Update(const std::vector<float>& data) {
   glBufferSubData(target_, 0, sizeof(float) * data.size(),
                   reinterpret_cast<const void*>(data.data()));
   Unbind();
+  num_elements_ = static_cast<int>(data.size());
 }
 
 void BufferObject::Update(const std::vector<glm::vec2>& data) {
@@ -135,6 +136,7 @@ void BufferObject::Update(const std::vector<glm::vec2>& data) {
   glBufferSubData(target_, 0, sizeof(glm::vec2) * data.size(),
                   reinterpret_cast<const void*>(data.data()));
   Unbind();
+  num_elements_ = static_cast<int>(data.size());
 }
 
 void BufferObject::Update(const std::vector<glm::vec3>& data) {
@@ -142,6 +144,7 @@ void BufferObject::Update(const std::vector<glm::vec3>& data) {
   glBufferSubData(target_, 0, sizeof(glm::vec3) * data.size(),
                   reinterpret_cast<const void*>(data.data()));
   Unbind();
+  num_elements_ = static_cast<int>(data.size());
 }
 
 void BufferObject::Update(const std::vector<glm::vec4>& data) {
@@ -149,6 +152,7 @@ void BufferObject::Update(const std::vector<glm::vec4>& data) {
   glBufferSubData(target_, 0, sizeof(glm::vec4) * data.size(),
                   reinterpret_cast<const void*>(data.data()));
   Unbind();
+  num_elements_ = static_cast<int>(data.size());
 }
 
 void BufferObject::Update(const std::vector<uint32_t>& data) {
@@ -156,6 +160,7 @@ void BufferObject::Update(const std::vector<uint32_t>& data) {
   glBufferSubData(target_, 0, sizeof(uint32_t) * data.size(),
                   reinterpret_cast<const void*>(data.data()));
   Unbind();
+  num_elements_ = static_cast<int>(data.size());
 }
 
 void BufferObject::Read(std::vector<uint32_t>& data) {

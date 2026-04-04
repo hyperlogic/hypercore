@@ -32,7 +32,7 @@ class Geom {
                               std::vector<glm::vec3> norm,
                               std::vector<uint32_t> indices);
   void Clear();
-  void Push(const Geom& geom);
+  void Push(const Geom& geom, const glm::mat4& xform);
   const std::vector<glm::vec3> pos_vec() const { return pos_vec_; }
   const std::vector<glm::vec3> norm_vec() const { return norm_vec_; }
   const std::vector<uint32_t> index_vec() const { return index_vec_; }

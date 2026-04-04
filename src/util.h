@@ -110,5 +110,6 @@ void StrCpy_s(char* dest, size_t destsz, const char* src);
 
 glm::vec2 ToPlane(const glm::vec3& vec3);
 glm::vec3 FromPlane(const glm::vec2& vec2);
+glm::quat RotationBetweenVectors(glm::vec3 from, glm::vec3 to);
 
 }  // namespace hyper

@@ -253,6 +253,10 @@ glm::vec3 XformVec(const glm::mat4& m, const glm::vec3& v) {
   return glm::mat3(m) * v;
 }
 
+glm::vec3 XformVecSlow(const glm::mat4& m, const glm::vec3& v) {
+  return glm::mat3(m) * v;
+}
+
 glm::vec3 RandomColor() {
   return glm::vec3(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.0f),
                    glm::linearRand(0.0f, 1.0f));
@@ -526,6 +530,27 @@ glm::vec2 ToPlane(const glm::vec3& vec3) {
 
 glm::vec3 FromPlane(const glm::vec2& vec2) {
   return glm::vec3(vec2.x, 0.0f, vec2.y);
+}
+
+glm::quat RotationBetweenVectors(glm::vec3 from, glm::vec3 to) {
+  from = glm::normalize(from);
+  to = glm::normalize(to);
+
+  float cosTheta = glm::dot(from, to);
+
+  // Vectors point in opposite directions — pick an arbitrary perpendicular axis
+  if (cosTheta < -1.0f + 1e-6f) {
+    glm::vec3 axis = glm::cross(glm::vec3(0.0f, 0.0f, 1.0f), from);
+    if (glm::dot(axis, axis) < 1e-6f)
+      axis = glm::cross(glm::vec3(1.0f, 0.0f, 0.0f), from);
+    return glm::angleAxis(glm::radians(180.0f), glm::normalize(axis));
+  }
+
+  glm::vec3 axis = glm::cross(from, to);
+
+  // Half-angle trick: avoids computing acos
+  float s = sqrtf((1.0f + cosTheta) * 2.0f);
+  return glm::quat(s * 0.5f, axis.x / s, axis.y / s, axis.z / s);
 }
 
 }  // namespace hyper

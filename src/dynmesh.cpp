@@ -39,8 +39,8 @@ void DynMesh::Clear() {
   dirty_ = true;
 }
 
-void DynMesh::Push(const Geom& geom, glm::vec4 color) {
-  geom_batch_.Push(geom);
+void DynMesh::Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color) {
+  geom_batch_.Push(geom, xform);
   color_batch_.insert(color_batch_.end(), geom.pos_vec().size(), color);
   dirty_ = true;
 }

@@ -27,7 +27,7 @@ class DynMesh {
           std::shared_ptr<Node> node);
 
   void Clear();
-  void Push(const Geom& geom, glm::vec4 color);
+  void Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color);
 
   virtual void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
                       const glm::vec4& viewport, const glm::vec2& near_far);

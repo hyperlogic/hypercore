@@ -63,10 +63,15 @@ void Geom::Clear() {
   index_vec_.clear();
 }
 
-void Geom::Push(const Geom& other) {
+void Geom::Push(const Geom& other, const glm::mat4& xform) {
+  glm::mat3 normal_xform(glm::transpose(glm::inverse(glm::mat3(xform))));
   size_t vertex_start = pos_vec_.size();
   pos_vec_.insert(pos_vec_.end(), other.pos_vec_.begin(), other.pos_vec_.end());
   norm_vec_.insert(norm_vec_.end(), other.norm_vec_.begin(), other.norm_vec_.end());
+  for (size_t i = vertex_start; i < pos_vec_.size(); i++) {
+    pos_vec_[i] = XformPoint(xform, pos_vec_[i]);
+    norm_vec_[i] = normal_xform * norm_vec_[i];
+  }
   size_t index_start = index_vec_.size();
   index_vec_.insert(index_vec_.end(), other.index_vec_.begin(), other.index_vec_.end());
   for (size_t i = index_start; i < index_vec_.size(); i++) {

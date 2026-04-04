@@ -3,10 +3,11 @@
     This software is licensed under the MIT License. See LICENSE for more details.
 */
 
-#include "geom.h"
+#include "src/geom.h"
 
 #include <map>
 #include <utility>
+#include <vector>
 
 #include "src/util.h"
 
@@ -19,7 +20,8 @@ Geom::~Geom() = default;
 Geom::Geom(const Geom& other)
     : pos_vec_(other.pos_vec_),
       norm_vec_(other.norm_vec_),
-      index_vec_(other.index_vec_) {}
+      index_vec_(other.index_vec_) {
+}
 
 Geom& Geom::operator=(const Geom& other) {
   if (this != &other) {
@@ -33,7 +35,8 @@ Geom& Geom::operator=(const Geom& other) {
 Geom::Geom(Geom&& other) noexcept
     : pos_vec_(std::move(other.pos_vec_)),
       norm_vec_(std::move(other.norm_vec_)),
-      index_vec_(std::move(other.index_vec_)) {}
+      index_vec_(std::move(other.index_vec_)) {
+}
 
 Geom& Geom::operator=(Geom&& other) noexcept {
   if (this != &other) {
@@ -45,8 +48,8 @@ Geom& Geom::operator=(Geom&& other) noexcept {
 }
 
 Geom Geom::MoveFromBuffers(std::vector<glm::vec3> pos,
-                            std::vector<glm::vec3> norm,
-                            std::vector<uint32_t> indices) {
+                           std::vector<glm::vec3> norm,
+                           std::vector<uint32_t> indices) {
   Geom result;
   result.pos_vec_ = std::move(pos);
   result.norm_vec_ = std::move(norm);

@@ -78,7 +78,8 @@ void DynMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
     if (index_buffer_ && index_buffer_->num_elements() >= geom_batch_.index_vec().size()) {
       index_buffer_->Update(geom_batch_.index_vec());
     } else {
-      index_buffer_ = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, geom_batch_.index_vec(), GL_DYNAMIC_STORAGE_BIT);
+      index_buffer_ = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, geom_batch_.index_vec(),
+                                                     GL_DYNAMIC_STORAGE_BIT);
     }
     dirty_ = false;
   }

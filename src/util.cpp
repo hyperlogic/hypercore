@@ -553,4 +553,56 @@ glm::quat RotationBetweenVectors(glm::vec3 from, glm::vec3 to) {
   return glm::quat(s * 0.5f, axis.x / s, axis.y / s, axis.z / s);
 }
 
+int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                       glm::vec3 sphere_center, float sphere_radius,
+                       float* result_1, float* result_2) {
+  glm::vec3 l = ray_point - sphere_center;
+  float a = glm::dot(ray_dir, ray_dir);
+  float b = 2.0f * glm::dot(ray_dir, l);
+  float c = glm::dot(l, l) - sphere_radius * sphere_radius;
+  float disc = glm::sqrt((b * b) - (4.0f * a * c));
+  if (disc > 0.0f) {
+    *result_1 = (-b * disc) / (2.0f * a);
+    *result_2 = (b * disc) / (2.0f * a);
+    return 2;
+  } else if (disc == 0.0f) {
+    *result_1 = (b * disc) / (2.0f * a);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
+                    const glm::mat4& proj_mat, const glm::vec4& viewport,
+                    const glm::vec2& near_far, glm::vec3* ray_point,
+                    glm::vec3* ray_dir) {
+  // Convert screen position to normalized device coordinates.
+  float ndc_x = (static_cast<float>(screen_pos.x) - viewport.x) /
+                viewport.z * 2.0f - 1.0f;
+  float ndc_y = (static_cast<float>(screen_pos.y) - viewport.y) /
+                viewport.w * 2.0f - 1.0f;
+
+  // Unproject from NDC to view space using the inverse projection matrix.
+  glm::mat4 inv_proj = glm::inverse(proj_mat);
+
+  // Near and far points in clip space (OpenGL convention: z in [-1, 1]).
+  glm::vec4 near_clip(ndc_x, ndc_y, -1.0f, 1.0f);
+  glm::vec4 far_clip(ndc_x, ndc_y, 1.0f, 1.0f);
+
+  // Transform to view space with perspective divide.
+  glm::vec4 near_view = inv_proj * near_clip;
+  near_view /= near_view.w;
+  glm::vec4 far_view = inv_proj * far_clip;
+  far_view /= far_view.w;
+
+  // Transform from view space to world space using the camera matrix
+  // (inverse view matrix).
+  glm::vec3 near_world = glm::vec3(camera_mat * near_view);
+  glm::vec3 far_world = glm::vec3(camera_mat * far_view);
+
+  *ray_point = near_world;
+  *ray_dir = glm::normalize(far_world - near_world);
+}
+
 }  // namespace hyper

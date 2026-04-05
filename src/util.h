@@ -112,4 +112,22 @@ glm::vec2 ToPlane(const glm::vec3& vec3);
 glm::vec3 FromPlane(const glm::vec2& vec2);
 glm::quat RotationBetweenVectors(glm::vec3 from, glm::vec3 to);
 
+// The ray is described as a parametric equation.
+// f(t) = ray_point + t * ray_dir
+// The return value is the number of solutions, {0, 1, 2}
+// where result_1 and result_2 contains the first and second solutions.
+// These are values of t along the ray that intersect with the sphere.
+int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                       glm::vec3 sphere_center, float sphere_radius,
+                       float* result_1, float* result_2);
+
+// Create a pick ray from render data.
+// camera_mat = inverse view mat
+// viewport = (x, y, width, height)
+// near_far = (near, far)
+void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
+                    const glm::mat4& proj_mat, const glm::vec4& viewport,
+                    const glm::vec2& near_far, glm::vec3* ray_point,
+                    glm::vec3* ray_dir);
+
 }  // namespace hyper

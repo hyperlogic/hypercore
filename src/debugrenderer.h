@@ -34,7 +34,7 @@ class DebugRenderer {
   void Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
             const glm::vec3& start_color, const glm::vec3& end_color);
   void Transform(const glm::mat4& m, float axis_len = 1.0f);
-  void Box(const glm::mat4& m, float radius = 0.5f);
+  void Box(const glm::mat4& m, float radius, glm::vec3 color);
 
  protected:
   std::shared_ptr<Program> dd_prog_;

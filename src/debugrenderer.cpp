@@ -82,7 +82,7 @@ void DebugRenderer::Transform(const glm::mat4& m, float axis_len) {
   Line(p, p + z, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 }
 
-void DebugRenderer::Box(const glm::mat4& m, float radius) {
+void DebugRenderer::Box(const glm::mat4& m, float radius, glm::vec3 color) {
   // Construct box corners in local space
   // radius is distance from center to corner, so for a cube:
   // corner = (±a, ±a, ±a) where sqrt(3a²) = radius
@@ -107,25 +107,23 @@ void DebugRenderer::Box(const glm::mat4& m, float radius) {
     world_corners[i] = glm::vec3(world_pos);
   }
 
-  glm::vec3 box_color(1.0f, 1.0f, 1.0f);  // White color for box
-
   // Draw bottom face (4 edges)
-  Line(world_corners[0], world_corners[1], box_color);
-  Line(world_corners[1], world_corners[2], box_color);
-  Line(world_corners[2], world_corners[3], box_color);
-  Line(world_corners[3], world_corners[0], box_color);
+  Line(world_corners[0], world_corners[1], color);
+  Line(world_corners[1], world_corners[2], color);
+  Line(world_corners[2], world_corners[3], color);
+  Line(world_corners[3], world_corners[0], color);
 
   // Draw top face (4 edges)
-  Line(world_corners[4], world_corners[5], box_color);
-  Line(world_corners[5], world_corners[6], box_color);
-  Line(world_corners[6], world_corners[7], box_color);
-  Line(world_corners[7], world_corners[4], box_color);
+  Line(world_corners[4], world_corners[5], color);
+  Line(world_corners[5], world_corners[6], color);
+  Line(world_corners[6], world_corners[7], color);
+  Line(world_corners[7], world_corners[4], color);
 
   // Draw vertical edges (4 edges)
-  Line(world_corners[0], world_corners[4], box_color);
-  Line(world_corners[1], world_corners[5], box_color);
-  Line(world_corners[2], world_corners[6], box_color);
-  Line(world_corners[3], world_corners[7], box_color);
+  Line(world_corners[0], world_corners[4], color);
+  Line(world_corners[1], world_corners[5], color);
+  Line(world_corners[2], world_corners[6], color);
+  Line(world_corners[3], world_corners[7], color);
 }
 
 void DebugRenderer::Render(const glm::mat4& camera_mat,

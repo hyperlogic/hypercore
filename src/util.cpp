@@ -649,6 +649,79 @@ int RayCylinderIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   return 2;
 }
 
+int RayConeIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 cone_base, glm::vec3 cone_tip,
+                     float cone_base_radius,
+                     float* result_1, float* result_2) {
+  glm::vec3 axis = cone_tip - cone_base;
+  float height2 = glm::dot(axis, axis);
+  if (height2 <= 0.0f || cone_base_radius <= 0.0f) {
+    return 0;
+  }
+  float height = glm::sqrt(height2);
+  glm::vec3 ca = axis / height;  // unit axis from base to tip
+  // Half-angle of cone: tan(theta) = radius / height.
+  // For points on the cone: dot(p - tip, -ca)^2 * cos^2 = |p - tip|^2 * cos^2 ..
+  // Standard quadratic form: let m = cos^2(theta).
+  float cos_t2 = (height * height) / (height * height +
+                                      cone_base_radius * cone_base_radius);
+
+  float hits[2];
+  int hit_count = 0;
+
+  // Side intersection: cone with apex at cone_tip, axis pointing from tip to
+  // base (direction = -ca), opening toward the base.
+  glm::vec3 co = ray_point - cone_tip;
+  glm::vec3 d = ray_dir;
+  float dv = glm::dot(d, -ca);
+  float cov = glm::dot(co, -ca);
+  float a = dv * dv - cos_t2 * glm::dot(d, d);
+  float b = 2.0f * (dv * cov - cos_t2 * glm::dot(d, co));
+  float c = cov * cov - cos_t2 * glm::dot(co, co);
+  if (glm::abs(a) > 1e-12f) {
+    float disc = b * b - 4.0f * a * c;
+    if (disc >= 0.0f) {
+      float sq = glm::sqrt(disc);
+      float inv2a = 1.0f / (2.0f * a);
+      float ts[2] = { (-b - sq) * inv2a, (-b + sq) * inv2a };
+      for (int i = 0; i < 2; ++i) {
+        glm::vec3 p = ray_point + ts[i] * d;
+        // Height along axis from tip; valid if within [0, height] (i.e. on
+        // the finite cone, not the mirror nappe).
+        float h = glm::dot(p - cone_tip, -ca);
+        if (h >= 0.0f && h <= height && hit_count < 2) {
+          hits[hit_count++] = ts[i];
+        }
+      }
+    }
+  }
+
+  // Base cap intersection (disk at cone_base, normal ca).
+  float denom = glm::dot(ray_dir, ca);
+  if (glm::abs(denom) > 1e-12f && hit_count < 2) {
+    float t = glm::dot(cone_base - ray_point, ca) / denom;
+    glm::vec3 p = ray_point + t * ray_dir;
+    glm::vec3 rv = p - cone_base;
+    if (glm::dot(rv, rv) <= cone_base_radius * cone_base_radius) {
+      hits[hit_count++] = t;
+    }
+  }
+
+  if (hit_count == 0) {
+    return 0;
+  }
+  if (hit_count == 1) {
+    *result_1 = hits[0];
+    return 1;
+  }
+  if (hits[0] > hits[1]) {
+    std::swap(hits[0], hits[1]);
+  }
+  *result_1 = hits[0];
+  *result_2 = hits[1];
+  return 2;
+}
+
 void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
                     const glm::mat4& proj_mat, const glm::vec4& viewport,
                     const glm::vec2& near_far, glm::vec3* ray_point,

@@ -129,6 +129,11 @@ int RayCylinderIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                          float cylinder_radius,
                          float* result_1, float* result_2);
 
+int RayConeIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 cone_base, glm::vec3 cone_tip,
+                     float cone_base_radius,
+                     float* result_1, float* result_2);
+
 // Create a pick ray from render data.
 // camera_mat = inverse view mat
 // viewport = (x, y, width, height)

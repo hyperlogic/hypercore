@@ -560,17 +560,93 @@ int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   float a = glm::dot(ray_dir, ray_dir);
   float b = 2.0f * glm::dot(ray_dir, l);
   float c = glm::dot(l, l) - sphere_radius * sphere_radius;
-  float disc = glm::sqrt((b * b) - (4.0f * a * c));
-  if (disc > 0.0f) {
-    *result_1 = (-b * disc) / (2.0f * a);
-    *result_2 = (b * disc) / (2.0f * a);
-    return 2;
-  } else if (disc == 0.0f) {
-    *result_1 = (b * disc) / (2.0f * a);
-    return 1;
-  } else {
+  float disc = (b * b) - (4.0f * a * c);
+  if (disc < 0.0f) {
     return 0;
   }
+  float sq = glm::sqrt(disc);
+  float inv2a = 1.0f / (2.0f * a);
+  if (disc > 0.0f) {
+    *result_1 = (-b - sq) * inv2a;
+    *result_2 = (-b + sq) * inv2a;
+    return 2;
+  } else {
+    *result_1 = -b * inv2a;
+    return 1;
+  }
+}
+
+// The axis of the cylinder is from start to end with the given radius.
+// Detects intersections with both the cylinder side and the end caps.
+int RayCylinderIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                         glm::vec3 cylinder_start, glm::vec3 cylinder_end,
+                         float cylinder_radius,
+                         float* result_1, float* result_2) {
+  glm::vec3 axis = cylinder_end - cylinder_start;
+  float axis_len2 = glm::dot(axis, axis);
+  if (axis_len2 <= 0.0f) {
+    return 0;
+  }
+  float axis_len = glm::sqrt(axis_len2);
+  glm::vec3 ca = axis / axis_len;
+  float r2 = cylinder_radius * cylinder_radius;
+
+  float hits[2];
+  int hit_count = 0;
+
+  // Side intersection: project ray and offset onto plane perpendicular to ca.
+  glm::vec3 m = ray_point - cylinder_start;
+  glm::vec3 v = ray_dir - glm::dot(ray_dir, ca) * ca;
+  glm::vec3 w = m - glm::dot(m, ca) * ca;
+  float a = glm::dot(v, v);
+  float b = 2.0f * glm::dot(v, w);
+  float c = glm::dot(w, w) - r2;
+  if (a > 1e-12f) {
+    float disc = b * b - 4.0f * a * c;
+    if (disc >= 0.0f) {
+      float sq = glm::sqrt(disc);
+      float inv2a = 1.0f / (2.0f * a);
+      float t0 = (-b - sq) * inv2a;
+      float t1 = (-b + sq) * inv2a;
+      float candidates[2] = { t0, t1 };
+      for (int i = 0; i < 2; ++i) {
+        float t = candidates[i];
+        glm::vec3 p = ray_point + t * ray_dir;
+        float h = glm::dot(p - cylinder_start, ca);
+        if (h >= 0.0f && h <= axis_len && hit_count < 2) {
+          hits[hit_count++] = t;
+        }
+      }
+    }
+  }
+
+  // Cap intersections.
+  float denom = glm::dot(ray_dir, ca);
+  if (glm::abs(denom) > 1e-12f) {
+    glm::vec3 caps[2] = { cylinder_start, cylinder_end };
+    for (int i = 0; i < 2 && hit_count < 2; ++i) {
+      float t = glm::dot(caps[i] - ray_point, ca) / denom;
+      glm::vec3 p = ray_point + t * ray_dir;
+      glm::vec3 d = p - caps[i];
+      if (glm::dot(d, d) <= r2) {
+        hits[hit_count++] = t;
+      }
+    }
+  }
+
+  if (hit_count == 0) {
+    return 0;
+  }
+  if (hit_count == 1) {
+    *result_1 = hits[0];
+    return 1;
+  }
+  if (hits[0] > hits[1]) {
+    std::swap(hits[0], hits[1]);
+  }
+  *result_1 = hits[0];
+  *result_2 = hits[1];
+  return 2;
 }
 
 void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,

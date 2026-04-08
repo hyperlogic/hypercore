@@ -121,6 +121,14 @@ int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                        glm::vec3 sphere_center, float sphere_radius,
                        float* result_1, float* result_2);
 
+// The axis of the cylinder is from start to end with the given radius.
+// Detects intersections with both the cylinder side and the end caps.
+// Returns the number of solutions {0, 1, 2}, sorted so result_1 <= result_2.
+int RayCylinderIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                         glm::vec3 cylinder_start, glm::vec3 cylinder_end,
+                         float cylinder_radius,
+                         float* result_1, float* result_2);
+
 // Create a pick ray from render data.
 // camera_mat = inverse view mat
 // viewport = (x, y, width, height)
@@ -129,5 +137,6 @@ void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
                     const glm::mat4& proj_mat, const glm::vec4& viewport,
                     const glm::vec2& near_far, glm::vec3* ray_point,
                     glm::vec3* ray_dir);
+
 
 }  // namespace hyper

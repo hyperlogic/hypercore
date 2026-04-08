@@ -75,7 +75,7 @@ void Geom::Push(const Geom& other, const glm::mat4& xform) {
   size_t index_start = index_vec_.size();
   index_vec_.insert(index_vec_.end(), other.index_vec_.begin(), other.index_vec_.end());
   for (size_t i = index_start; i < index_vec_.size(); i++) {
-    index_vec_[i] += vertex_start;
+    index_vec_[i] += static_cast<uint32_t>(vertex_start);
   }
 }
 

@@ -140,6 +140,7 @@ add_library(hypercore STATIC
     src/mesh.cpp
     src/program.cpp
     src/sdl_main.cpp
+    src/shapepicker.cpp
     src/texture.cpp
     src/ubermaterial.cpp
     src/ubershader.cpp

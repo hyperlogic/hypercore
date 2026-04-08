@@ -7,6 +7,8 @@
 
 #include <SDL2/SDL.h>
 
+#include <utility>
+
 #include "src/log.h"
 
 namespace hyper {
@@ -24,16 +26,21 @@ InputBuddy::InputBuddy() {
 void InputBuddy::ProcessEvent(const SDL_Event& event) {
   switch (event.type) {
     case SDL_QUIT:
-      quit_callback_();
+      for (auto& iter : quit_callback_map_) {
+        iter.second();
+      }
       break;
     case SDL_KEYDOWN:
     case SDL_KEYUP: {
       SDL_Keycode keycode = event.key.keysym.sym;
       uint16_t mod = event.key.keysym.mod;
       bool down = (event.key.type == SDL_KEYDOWN);
-      auto iter = key_callback_map_.find(keycode);
-      if (iter != key_callback_map_.end() && !event.key.repeat) {
-        iter->second(down, mod);
+      if (!event.key.repeat) {
+        for (auto& iter : key_callback_map_) {
+          if (iter.second.first == keycode) {
+            iter.second.second(down, mod);
+          }
+        }
       }
     }
     break;
@@ -50,43 +57,79 @@ void InputBuddy::ProcessEvent(const SDL_Event& event) {
 
     case SDL_WINDOWEVENT:
       if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-        resize_callback_(event.window.data1, event.window.data2);
+        for (auto& iter : resize_callback_map_) {
+          iter.second(event.window.data1, event.window.data2);
+        }
       }
       break;
 
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP:
       if (event.button.clicks == 1) {
-        mouse_button_callback_(event.button.button,
-                               event.button.state == SDL_PRESSED,
-                               glm::ivec2(event.button.x, event.button.y));
+        for (auto& iter : mouse_button_callback_map_) {
+          iter.second(event.button.button,
+                      event.button.state == SDL_PRESSED,
+                      glm::ivec2(event.button.x, event.button.y));
+        }
       }
       break;
     case SDL_MOUSEMOTION:
-      mouse_motion_callback_(glm::ivec2(event.motion.x, event.motion.y),
-                             glm::ivec2(event.motion.xrel, event.motion.yrel));
+      for (auto& iter : mouse_motion_callback_map_) {
+        iter.second(glm::ivec2(event.motion.x, event.motion.y),
+                    glm::ivec2(event.motion.xrel, event.motion.yrel));
+      }
       break;
   }
 }
 
-void InputBuddy::OnKey(Keycode key, const KeyCallback& cb) {
-  key_callback_map_.insert(std::pair<Keycode, KeyCallback>(key, cb));
+uint32_t InputBuddy::SetOnKey(Keycode key, const KeyCallback& cb) {
+  uint32_t id = next_callback_id_++;
+  key_callback_map_[id] = std::make_pair(key, cb);
+  return id;
 }
 
-void InputBuddy::OnQuit(const VoidCallback& cb) {
-  quit_callback_ = cb;
+void InputBuddy::ClearOnKey(uint32_t id) {
+  key_callback_map_.erase(id);
 }
 
-void InputBuddy::OnResize(const ResizeCallback& cb) {
-  resize_callback_ = cb;
+uint32_t InputBuddy::SetOnQuit(const VoidCallback& cb) {
+  uint32_t id = next_callback_id_++;
+  quit_callback_map_[id] = cb;
+  return id;
 }
 
-void InputBuddy::OnMouseButton(const MouseButtonCallback& cb) {
-  mouse_button_callback_ = cb;
+void InputBuddy::ClearOnQuit(uint32_t id) {
+  quit_callback_map_.erase(id);
 }
 
-void InputBuddy::OnMouseMotion(const MouseMotionCallback& cb) {
-  mouse_motion_callback_ = cb;
+uint32_t InputBuddy::SetOnResize(const ResizeCallback& cb) {
+  uint32_t id = next_callback_id_++;
+  resize_callback_map_[id] = cb;
+  return id;
+}
+
+void InputBuddy::ClearOnResize(uint32_t id) {
+  resize_callback_map_.erase(id);
+}
+
+uint32_t InputBuddy::SetOnMouseButton(const MouseButtonCallback& cb) {
+  uint32_t id = next_callback_id_++;
+  mouse_button_callback_map_[id] = cb;
+  return id;
+}
+
+void InputBuddy::ClearOnMouseButton(uint32_t id) {
+  mouse_button_callback_map_.erase(id);
+}
+
+uint32_t InputBuddy::SetOnMouseMotion(const MouseMotionCallback& cb) {
+  uint32_t id = next_callback_id_++;
+  mouse_motion_callback_map_[id] = cb;
+  return id;
+}
+
+void InputBuddy::ClearOnMouseMotion(uint32_t id) {
+  mouse_motion_callback_map_.erase(id);
 }
 
 void InputBuddy::SetRelativeMouseMode(bool val) {

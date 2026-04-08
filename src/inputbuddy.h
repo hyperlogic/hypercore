@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <map>
+#include <utility>
 
 #include <glm/glm.hpp>
 
@@ -35,11 +36,16 @@ class InputBuddy {
 
   void ProcessEvent(const SDL_Event& event);
 
-  void OnKey(Keycode key, const KeyCallback& cb);
-  void OnQuit(const VoidCallback& cb);
-  void OnResize(const ResizeCallback& cb);
-  void OnMouseButton(const MouseButtonCallback& cb);
-  void OnMouseMotion(const MouseMotionCallback& cb);
+  uint32_t SetOnKey(Keycode key, const KeyCallback& cb);
+  void ClearOnKey(uint32_t id);
+  uint32_t SetOnQuit(const VoidCallback& cb);
+  void ClearOnQuit(uint32_t id);
+  uint32_t SetOnResize(const ResizeCallback& cb);
+  void ClearOnResize(uint32_t id);
+  uint32_t SetOnMouseButton(const MouseButtonCallback& cb);
+  void ClearOnMouseButton(uint32_t id);
+  uint32_t SetOnMouseMotion(const MouseMotionCallback& cb);
+  void ClearOnMouseMotion(uint32_t id);
 
   void SetRelativeMouseMode(bool val);
 
@@ -77,12 +83,13 @@ class InputBuddy {
   void UpdateJoypadHat(const SDL_JoyHatEvent& event);
   void UpdateJoypadButton(const SDL_JoyButtonEvent& event);
 
-  std::map<Keycode, KeyCallback> key_callback_map_;
-  VoidCallback quit_callback_;
-  ResizeCallback resize_callback_;
-  MouseButtonCallback mouse_button_callback_;
-  MouseMotionCallback mouse_motion_callback_;
   Joypad joypad_;
+  uint32_t next_callback_id_ = 1;
+  std::map<uint32_t, std::pair<Keycode, KeyCallback>> key_callback_map_;
+  std::map<uint32_t, VoidCallback> quit_callback_map_;
+  std::map<uint32_t, ResizeCallback> resize_callback_map_;
+  std::map<uint32_t, MouseButtonCallback> mouse_button_callback_map_;
+  std::map<uint32_t, MouseMotionCallback> mouse_motion_callback_map_;
 };
 
 }  // namespace hyper

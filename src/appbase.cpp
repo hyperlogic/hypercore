@@ -333,85 +333,85 @@ bool AppBase::Init() {
 #ifdef USE_SDL
   input_buddy_ = std::make_shared<InputBuddy>();
 
-  input_buddy_->OnQuit([this]() {
+  input_buddy_->SetOnQuit([this]() {
     // forward this back to main
     quit_callback_();
   });
 
-  input_buddy_->OnResize([this](int new_width, int new_height) {
+  input_buddy_->SetOnResize([this](int new_width, int new_height) {
     glViewport(0, 0, new_width, new_height);
     resize_callback_(new_width, new_height);
   });
 
-  input_buddy_->OnKey(SDLK_ESCAPE, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_ESCAPE, [this](bool down, uint16_t mod) {
     quit_callback_();
   });
 
-  input_buddy_->OnKey(SDLK_F1, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_F1, [this](bool down, uint16_t mod) {
     if (down) {
       opt_.drawFps = !opt_.drawFps;
     }
   });
 
-  input_buddy_->OnKey(SDLK_a, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_a, [this](bool down, uint16_t mod) {
     virtual_left_stick_.x += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_d, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_d, [this](bool down, uint16_t mod) {
     virtual_left_stick_.x += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_w, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_w, [this](bool down, uint16_t mod) {
     virtual_left_stick_.y += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_s, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_s, [this](bool down, uint16_t mod) {
     virtual_left_stick_.y += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_f, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_f, [this](bool down, uint16_t mod) {
     if (down) {
       opt_.useFlyCam = !opt_.useFlyCam;
     }
   });
 
-  input_buddy_->OnKey(SDLK_LEFT, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_LEFT, [this](bool down, uint16_t mod) {
     virtual_right_stick_.x += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_RIGHT, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_RIGHT, [this](bool down, uint16_t mod) {
     virtual_right_stick_.x += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_UP, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_UP, [this](bool down, uint16_t mod) {
     virtual_right_stick_.y += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_DOWN, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_DOWN, [this](bool down, uint16_t mod) {
     virtual_right_stick_.y += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_q, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_q, [this](bool down, uint16_t mod) {
     virtual_roll_ += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_e, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_e, [this](bool down, uint16_t mod) {
     virtual_roll_ += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_t, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_t, [this](bool down, uint16_t mod) {
     virtual_up_ += down ? 1.0f : -1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_g, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_g, [this](bool down, uint16_t mod) {
     virtual_up_ += down ? -1.0f : 1.0f;
   });
 
-  input_buddy_->OnKey(SDLK_LSHIFT, [this](bool down, uint16_t mod) {
+  input_buddy_->SetOnKey(SDLK_LSHIFT, [this](bool down, uint16_t mod) {
     shift_down_ = down;
   });
 
-  input_buddy_->OnMouseButton([this](uint8_t button, bool down,
+  input_buddy_->SetOnMouseButton([this](uint8_t button, bool down,
                                      glm::ivec2 pos) {
     if (button == 3) {  // right button
       if (mouse_look_ != down) {
@@ -421,7 +421,7 @@ bool AppBase::Init() {
     }
   });
 
-  input_buddy_->OnMouseMotion([this](glm::ivec2 pos, glm::ivec2 rel) {
+  input_buddy_->SetOnMouseMotion([this](glm::ivec2 pos, glm::ivec2 rel) {
     if (mouse_look_) {
       const float kMouseSensitivity = 0.001f;
       mouse_look_stick_.x += rel.x * kMouseSensitivity;

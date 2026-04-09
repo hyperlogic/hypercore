@@ -15,26 +15,26 @@ namespace hyper {
 struct Sphere {
   glm::vec3 center;
   float radius;
-  int32_t user_data;
+  uint32_t user_data;
 };
 
 struct Cylinder {
   glm::vec3 start;
   glm::vec3 end;
   float radius;
-  int32_t user_data;
+  uint32_t user_data;
 };
 
 struct Cone {
   glm::vec3 base;
   glm::vec3 tip;
   float base_radius;
-  int32_t user_data;
+  uint32_t user_data;
 };
 
 struct PickResult {
   glm::vec3 pos;
-  int32_t user_data;
+  uint32_t user_data;
 };
 
 class ShapePicker {

@@ -26,6 +26,8 @@ class Geom {
                            int num_circle_subdivs, int num_length_subdivs);
   static Geom MakeCone(glm::vec3 start, glm::vec3 end, float radius,
                        int num_circle_subdivs, int num_length_subdivs);
+  static Geom MakeTorus(glm::vec3 center, glm::vec3 normal, float major_radius, float minor_radius,
+                        int num_major_subdivs, int num_minor_subdivs);
   static Geom MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, float radius);
 
   static Geom MoveFromBuffers(std::vector<glm::vec3> pos,

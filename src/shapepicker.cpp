@@ -42,7 +42,7 @@ bool ShapePicker::Pick(glm::vec3 ray_point, glm::vec3 ray_dir, PickResult* resul
   assert(result);
   bool found = false;
   float nearest_t = std::numeric_limits<float>::max();
-  int32_t nearest_user_data = 0;
+  uint32_t nearest_user_data = 0;
   float result_1, result_2;
   for (auto& sphere : sphere_vec_) {
     int count = RaySphereIntersect(ray_point, ray_dir,

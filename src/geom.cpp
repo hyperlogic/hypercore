@@ -291,6 +291,44 @@ Geom Geom::MakeCone(glm::vec3 start, glm::vec3 end, float radius,
   return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
 }
 
+Geom Geom::MakeTorus(glm::vec3 center, glm::vec3 normal, float major_radius, float minor_radius,
+                     int num_major_subdivs, int num_minor_subdivs) {
+  glm::vec3 n = SafeNormalize(normal, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  // Build an orthonormal basis in the plane perpendicular to the normal.
+  glm::vec3 up = (std::abs(glm::dot(n, glm::vec3(0, 1, 0))) < 0.99f)
+                     ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
+  glm::vec3 u = glm::normalize(glm::cross(n, up));
+  glm::vec3 v = glm::cross(n, u);
+
+  std::vector<glm::vec3> positions;
+  std::vector<glm::vec3> normals;
+  std::vector<uint32_t> indices;
+
+  int verts_per_major = num_minor_subdivs + 1;
+  for (int i = 0; i <= num_major_subdivs; i++) {
+    float major_angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(num_major_subdivs);
+    glm::vec3 radial = u * std::cos(major_angle) + v * std::sin(major_angle);
+    glm::vec3 ring_center = center + radial * major_radius;
+    for (int j = 0; j <= num_minor_subdivs; j++) {
+      float minor_angle = 2.0f * glm::pi<float>() * static_cast<float>(j) / static_cast<float>(num_minor_subdivs);
+      glm::vec3 norm_dir = radial * std::cos(minor_angle) + n * std::sin(minor_angle);
+      positions.push_back(ring_center + norm_dir * minor_radius);
+      normals.push_back(norm_dir);
+    }
+  }
+
+  for (int i = 0; i < num_major_subdivs; i++) {
+    for (int j = 0; j < num_minor_subdivs; j++) {
+      uint32_t curr = i * verts_per_major + j;
+      uint32_t next = curr + verts_per_major;
+      indices.insert(indices.end(), {curr, next, curr + 1, curr + 1, next, next + 1});
+    }
+  }
+
+  return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
+}
+
 Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, float radius) {
   glm::vec3 axis = end - start;
   glm::vec3 axis_dir = SafeNormalize(axis, glm::vec3(0.0f, 1.0f, 0.0f));

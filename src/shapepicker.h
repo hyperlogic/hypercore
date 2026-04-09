@@ -34,7 +34,9 @@ struct Cone {
 
 struct PickResult {
   glm::vec3 pos;
+  float t;
   uint32_t user_data;
+  bool valid;
 };
 
 class ShapePicker {

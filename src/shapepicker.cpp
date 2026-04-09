@@ -97,7 +97,14 @@ bool ShapePicker::Pick(glm::vec3 ray_point, glm::vec3 ray_dir, PickResult* resul
   }
   if (found) {
     result->pos = ray_point + nearest_t * ray_dir;
+    result->t = nearest_t;
     result->user_data = nearest_user_data;
+    result->valid = true;
+  } else {
+    result->pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    result->t = std::numeric_limits<float>::max();
+    result->user_data = -1;
+    result->valid = false;
   }
   return found;
 }

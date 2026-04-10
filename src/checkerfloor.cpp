@@ -80,14 +80,11 @@ bool CheckerFloor::Init(bool is_framebuffer_srgb_enabled_in) {
   return true;
 }
 
-void CheckerFloor::Render(const glm::mat4& camera_mat,
-                          const glm::mat4& proj_mat,
-                          const glm::vec4& viewport,
-                          const glm::vec2& near_far) {
+void CheckerFloor::Render(const RenderParams& render_params) {
   floor_prog_->Bind();
 
-  glm::mat4 model_view_mat = glm::inverse(camera_mat) * floor_mat_;
-  floor_prog_->SetUniform("modelViewProjMat", proj_mat * model_view_mat);
+  glm::mat4 model_view_mat = glm::inverse(render_params.camera_mat) * floor_mat_;
+  floor_prog_->SetUniform("modelViewProjMat", render_params.proj_mat * model_view_mat);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, floor_tex_->texture);
   floor_prog_->SetUniform("colorTex", 0);

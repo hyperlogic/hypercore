@@ -26,8 +26,7 @@ class BoneMesh : public Mesh {
            std::vector<glm::mat4> inv_bind_pose_vec_in);
   ~BoneMesh() override;
 
-  void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-              const glm::vec4& viewport, const glm::vec2& near_far) override;
+  void Render(const RenderParams& render_params) override;
 
  protected:
   void InitTbo();

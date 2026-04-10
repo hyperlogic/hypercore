@@ -58,13 +58,12 @@ void BoneMesh::InitTbo() {
   glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
-void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-                      const glm::vec4& viewport, const glm::vec2& near_far) {
+void BoneMesh::Render(const RenderParams& render_params) {
   // AJT: TODO what is the proper model view and normal mat for this mesh?
   glm::mat4 model_mat = glm::mat4(1.0f);
-  glm::mat4 view_mat = glm::inverse(camera_mat);
+  glm::mat4 view_mat = glm::inverse(render_params.camera_mat);
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
-  glm::vec3 camera_pos = glm::vec3(camera_mat[3]);
+  glm::vec3 camera_pos = glm::vec3(render_params.camera_mat[3]);
 
   // build the abs_xform_vec_ aka boneMats
   node_->BuildDepthFirstAbsXformVec(abs_xform_vec_);
@@ -87,7 +86,7 @@ void BoneMesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
   mat_->prog()->SetUniform("camera_pos", camera_pos);
   mat_->prog()->SetUniform("model_mat", model_mat);
   mat_->prog()->SetUniform("view_mat", view_mat);
-  mat_->prog()->SetUniform("proj_mat", proj_mat);
+  mat_->prog()->SetUniform("proj_mat", render_params.proj_mat);
   mat_->prog()->SetUniform("normal_model_mat", normal_model_mat);
 
   mat_->prog()->SetUniform("light_direct_dir", glm::normalize(kLightDir));

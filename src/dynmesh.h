@@ -16,6 +16,8 @@
 
 namespace hyper {
 
+struct RenderParams;
+
 class BufferObject;
 class Node;
 class UberMaterial;
@@ -29,8 +31,7 @@ class DynMesh {
   void Clear();
   void Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color);
 
-  virtual void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-                      const glm::vec4& viewport, const glm::vec2& near_far);
+  virtual void Render(const RenderParams& render_params);
 
  protected:
   void SetAttribBuffer(int loc, const std::shared_ptr<BufferObject>& attrib_buffer);

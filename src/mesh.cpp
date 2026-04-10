@@ -30,19 +30,18 @@ Mesh::Mesh(std::shared_ptr<VertexArrayObject> vao,
     : vao_(vao), mat_(mat), node_(node) {
 }
 
-void Mesh::Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-                  const glm::vec4& viewport, const glm::vec2& near_far) {
+void Mesh::Render(const RenderParams& render_params) {
   glm::mat4 model_mat = node_->abs_xform();
-  glm::mat4 view_mat = glm::inverse(camera_mat);
+  glm::mat4 view_mat = glm::inverse(render_params.camera_mat);
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
-  glm::vec3 camera_pos = glm::vec3(camera_mat[3]);
+  glm::vec3 camera_pos = glm::vec3(render_params.camera_mat[3]);
 
   mat_->Bind();
 
   mat_->prog()->SetUniform("camera_pos", camera_pos);
   mat_->prog()->SetUniform("model_mat", model_mat);
   mat_->prog()->SetUniform("view_mat", view_mat);
-  mat_->prog()->SetUniform("proj_mat", proj_mat);
+  mat_->prog()->SetUniform("proj_mat", render_params.proj_mat);
   mat_->prog()->SetUniform("normal_model_mat", normal_model_mat);
 
   mat_->prog()->SetUniform("light_direct_dir", glm::normalize(kLightDir));

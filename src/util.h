@@ -28,6 +28,13 @@ void GLErrorCheck(const char* message);
 
 namespace hyper {
 
+struct RenderParams {
+  glm::mat4 camera_mat;
+  glm::mat4 proj_mat;
+  glm::vec4 viewport;
+  glm::vec2 near_far;
+};
+
 // returns true on success, false on failure
 bool LoadFile(const std::string& filename, std::string& result);
 bool LoadBinaryFile(const std::string& filename, std::vector<uint8_t>& data);
@@ -142,14 +149,9 @@ int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
                       glm::vec3 plane_normal, glm::vec3 plane_point,
                       float* result_t);
 
-// Create a pick ray from render data.
-// camera_mat = inverse view mat
-// viewport = (x, y, width, height)
-// near_far = (near, far)
-void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
-                    const glm::mat4& proj_mat, const glm::vec4& viewport,
-                    const glm::vec2& near_far, glm::vec3* ray_point,
-                    glm::vec3* ray_dir);
+// Create a pick ray from screen pos and RenderParams
+void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,
+                    glm::vec3* ray_point, glm::vec3* ray_dir);
 
 
 }  // namespace hyper

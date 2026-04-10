@@ -126,10 +126,7 @@ void DebugRenderer::Box(const glm::mat4& m, float radius, glm::vec3 color) {
   Line(world_corners[3], world_corners[7], color);
 }
 
-void DebugRenderer::Render(const glm::mat4& camera_mat,
-                           const glm::mat4& proj_mat,
-                           const glm::vec4& viewport,
-                           const glm::vec2& near_far) {
+void DebugRenderer::Render(const RenderParams& render_params) {
   frame_num_++;
 
 #ifdef __linux__
@@ -137,7 +134,7 @@ void DebugRenderer::Render(const glm::mat4& camera_mat,
 #endif
 
   dd_prog_->Bind();
-  glm::mat4 model_view_proj_mat = proj_mat * glm::inverse(camera_mat);
+  glm::mat4 model_view_proj_mat = render_params.proj_mat * glm::inverse(render_params.camera_mat);
   dd_prog_->SetUniform("modelViewProjMat", model_view_proj_mat);
 
   vao_->Bind();

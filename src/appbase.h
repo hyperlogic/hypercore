@@ -87,10 +87,8 @@ class AppBase {
                            glm::vec2 right_stick,
                            glm::vec2 face_dir,
                            glm::vec2 move_dir) = 0;
-  virtual bool RenderImpl(const glm::mat4& camera_mat,
-                          const glm::mat4& proj_mat,
-                          const glm::vec4& viewport,
-                          const glm::vec2& near_far) = 0;
+
+  virtual bool RenderImpl(const RenderParams& render_params) = 0;
   virtual bool RenderImGuiMenuBarImpl() = 0;
   virtual bool RenderImGuiImpl() = 0;
 

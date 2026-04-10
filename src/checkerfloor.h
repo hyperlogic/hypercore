@@ -13,6 +13,8 @@
 
 namespace hyper {
 
+struct RenderParams;
+
 class Texture;
 class Program;
 class VertexArrayObject;
@@ -23,8 +25,7 @@ class CheckerFloor {
 
   bool Init(bool is_framebuffer_srgb_enabled_in);
 
-  void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-              const glm::vec4& viewport, const glm::vec2& near_far);
+  void Render(const RenderParams& render_params);
 
   glm::mat4 floor_mat_;
 

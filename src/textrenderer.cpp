@@ -112,10 +112,7 @@ bool TextRenderer::Init(const std::string& font_json_filename,
   return true;
 }
 
-void TextRenderer::Render(const glm::mat4& camera_mat,
-                          const glm::mat4& proj_mat,
-                          const glm::vec4& viewport,
-                          const glm::vec2& near_far) {
+void TextRenderer::Render(const RenderParams& render_params) {
   text_prog_->Bind();
 
   // use texture unit 0 for fontTexture
@@ -123,8 +120,8 @@ void TextRenderer::Render(const glm::mat4& camera_mat,
   glBindTexture(GL_TEXTURE_2D, font_tex_->texture);
   text_prog_->SetUniform("fontTex", 0);
 
-  glm::mat4 view_proj_mat = proj_mat * glm::inverse(camera_mat);
-  float aspect = viewport.w / viewport.z;
+  glm::mat4 view_proj_mat = render_params.proj_mat * glm::inverse(render_params.camera_mat);
+  float aspect = render_params.viewport.w / render_params.viewport.z;
   glm::mat4 aspect_mat = MakeMat4(glm::vec3(aspect, 1.0f, 1.0f),
                                   glm::quat(),
                                   glm::vec3(-aspect / aspect, 0.0f, 0.0f));

@@ -734,18 +734,16 @@ int RayConeIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   return 2;
 }
 
-void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
-                    const glm::mat4& proj_mat, const glm::vec4& viewport,
-                    const glm::vec2& near_far, glm::vec3* ray_point,
-                    glm::vec3* ray_dir) {
+void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,
+                    glm::vec3* ray_point, glm::vec3* ray_dir) {
   // Convert screen position to normalized device coordinates.
-  float ndc_x = (static_cast<float>(screen_pos.x) - viewport.x) /
-                viewport.z * 2.0f - 1.0f;
-  float ndc_y = (static_cast<float>(screen_pos.y) - viewport.y) /
-                viewport.w * 2.0f - 1.0f;
+  float ndc_x = (static_cast<float>(screen_pos.x) - render_params.viewport.x) /
+                render_params.viewport.z * 2.0f - 1.0f;
+  float ndc_y = (static_cast<float>(screen_pos.y) - render_params.viewport.y) /
+                render_params.viewport.w * 2.0f - 1.0f;
 
   // Unproject from NDC to view space using the inverse projection matrix.
-  glm::mat4 inv_proj = glm::inverse(proj_mat);
+  glm::mat4 inv_proj = glm::inverse(render_params.proj_mat);
 
   // Near and far points in clip space (OpenGL convention: z in [-1, 1]).
   glm::vec4 near_clip(ndc_x, ndc_y, -1.0f, 1.0f);
@@ -759,8 +757,8 @@ void ComputePickRay(glm::ivec2 screen_pos, const glm::mat4& camera_mat,
 
   // Transform from view space to world space using the camera matrix
   // (inverse view matrix).
-  glm::vec3 near_world = glm::vec3(camera_mat * near_view);
-  glm::vec3 far_world = glm::vec3(camera_mat * far_view);
+  glm::vec3 near_world = glm::vec3(render_params.camera_mat * near_view);
+  glm::vec3 far_world = glm::vec3(render_params.camera_mat * far_view);
 
   *ray_point = near_world;
   *ray_dir = glm::normalize(far_world - near_world);

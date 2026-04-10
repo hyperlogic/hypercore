@@ -572,20 +572,24 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
     glm::mat4 origin_mat(1.0f);
     debug_renderer_->Transform(origin_mat, scene_cm_units_ ? 100.0f : 1.0f);
 
+    RenderParams render_params = {camera_mat, proj_mat, viewport, near_far};
+
     // keep the floor aligned to world up, and world units.
     if (!scene_hide_floor_) {
-      floor_->Render(scene_mat_ * camera_mat, proj_mat, viewport, near_far);
+      RenderParams floor_params = render_params;
+      floor_params.camera_mat = scene_mat_ * camera_mat;
+      floor_->Render(floor_params);
     }
 
     if (opt_.drawDebug) {
-      debug_renderer_->Render(camera_mat, proj_mat, viewport, near_far);
+      debug_renderer_->Render(render_params);
     }
 
     if (opt_.drawFps) {
-      text_renderer_->Render(camera_mat, proj_mat, viewport, near_far);
+      text_renderer_->Render(render_params);
     }
 
-    if (!RenderImpl(camera_mat, proj_mat, viewport, near_far)) {
+    if (!RenderImpl(render_params)) {
       Log::E("Error in RenderImpl\n");
       retVal = false;
     }

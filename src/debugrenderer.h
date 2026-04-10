@@ -12,6 +12,8 @@
 
 namespace hyper {
 
+struct RenderParams;
+
 class Program;
 class BufferObject;
 class VertexArrayObject;
@@ -23,8 +25,7 @@ class DebugRenderer {
   bool Init();
 
   // viewport = (x, y, width, height)
-  void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-              const glm::vec4& viewport, const glm::vec2& near_far);
+  void Render(const RenderParams& render_params);
 
   // call at end of frame.
   void EndFrame();

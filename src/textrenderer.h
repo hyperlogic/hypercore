@@ -15,6 +15,8 @@
 
 namespace hyper {
 
+struct RenderParams;
+
 class Program;
 class Texture;
 class VertexArrayObject;
@@ -27,8 +29,7 @@ class TextRenderer {
             const std::string& font_png_filename);
 
   // viewport = (x, y, width, height)
-  void Render(const glm::mat4& camera_mat, const glm::mat4& proj_mat,
-              const glm::vec4& viewport, const glm::vec2& near_far);
+  void Render(const RenderParams& render_params);
 
   using TextKey = uint32_t;
 

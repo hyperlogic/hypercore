@@ -33,6 +33,8 @@ struct Cone {
 };
 
 struct PickResult {
+  PickResult() : pos(0.0f, 0.0f, 0.0f), t(std::numeric_limits<float>::max()),
+                 user_data(-1), valid(false) {}
   glm::vec3 pos;
   float t;
   uint32_t user_data;

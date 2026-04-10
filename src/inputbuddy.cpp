@@ -65,12 +65,10 @@ void InputBuddy::ProcessEvent(const SDL_Event& event) {
 
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP:
-      if (event.button.clicks == 1) {
-        for (auto& iter : mouse_button_callback_map_) {
-          iter.second(event.button.button,
-                      event.button.state == SDL_PRESSED,
-                      glm::ivec2(event.button.x, event.button.y));
-        }
+      for (auto& iter : mouse_button_callback_map_) {
+        iter.second(event.button.button,
+                    event.button.state == SDL_PRESSED,
+                    glm::ivec2(event.button.x, event.button.y));
       }
       break;
     case SDL_MOUSEMOTION:

@@ -576,6 +576,18 @@ int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   }
 }
 
+int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
+                      glm::vec3 plane_normal, glm::vec3 plane_point,
+                      float* result_t) {
+  float denom = glm::dot(plane_normal, ray_dir);
+  // Ray is (near) parallel to the plane; no single intersection.
+  if (glm::abs(denom) < 1e-6f) {
+    return 0;
+  }
+  *result_t = glm::dot(plane_point - ray_point, plane_normal) / denom;
+  return 1;
+}
+
 // The axis of the cylinder is from start to end with the given radius.
 // Detects intersections with both the cylinder side and the end caps.
 int RayCylinderIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,

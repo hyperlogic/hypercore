@@ -134,6 +134,14 @@ int RayConeIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                      float cone_base_radius,
                      float* result_1, float* result_2);
 
+// Intersect a ray with a plane defined by a point on the plane and its
+// normal. Returns the number of solutions {0, 1}. When 1, *result_t is set
+// to the value of t along the ray at the intersection. Returns 0 if the
+// ray is parallel to the plane.
+int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
+                      glm::vec3 plane_normal, glm::vec3 plane_point,
+                      float* result_t);
+
 // Create a pick ray from render data.
 // camera_mat = inverse view mat
 // viewport = (x, y, width, height)

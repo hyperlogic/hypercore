@@ -50,6 +50,7 @@ class ShapePicker {
   void AddCone(const Cone& cone);
   bool Pick(glm::vec3 ray_point, glm::vec3 ray_dir, PickResult* result);
 
+ protected:
   std::vector<Sphere> sphere_vec_;
   std::vector<Cylinder> cylinder_vec_;
   std::vector<Cone> cone_vec_;

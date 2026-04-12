@@ -397,5 +397,69 @@ Geom Geom::MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, flo
   return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
 }
 
+Geom Geom::MakeRing(glm::vec3 center, glm::vec3 normal, float outer_radius, float inner_radius,
+                    int num_major_subdivs, int num_minor_subdivs) {
+  glm::vec3 n = SafeNormalize(normal, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  // Build an orthonormal basis in the plane perpendicular to the normal.
+  glm::vec3 up = (std::abs(glm::dot(n, glm::vec3(0, 1, 0))) < 0.99f)
+                     ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
+  glm::vec3 u = glm::normalize(glm::cross(n, up));
+  glm::vec3 v = glm::cross(n, u);
+
+  std::vector<glm::vec3> positions;
+  std::vector<glm::vec3> normals;
+  std::vector<uint32_t> indices;
+
+  // Generate vertices: rings from inner to outer radius, each subdivided around the circle.
+  int radial_rings = num_minor_subdivs + 1;
+  int verts_per_ring = num_major_subdivs + 1;
+
+  // Top face vertices (normal points along n).
+  for (int r = 0; r <= num_minor_subdivs; r++) {
+    float t = static_cast<float>(r) / static_cast<float>(num_minor_subdivs);
+    float radius = glm::mix(inner_radius, outer_radius, t);
+    for (int seg = 0; seg <= num_major_subdivs; seg++) {
+      float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_major_subdivs);
+      glm::vec3 radial = u * std::cos(angle) + v * std::sin(angle);
+      positions.push_back(center + radial * radius);
+      normals.push_back(n);
+    }
+  }
+
+  // Top face indices.
+  for (int r = 0; r < num_minor_subdivs; r++) {
+    for (int seg = 0; seg < num_major_subdivs; seg++) {
+      uint32_t curr = r * verts_per_ring + seg;
+      uint32_t next = curr + verts_per_ring;
+      indices.insert(indices.end(), {curr, next, curr + 1, curr + 1, next, next + 1});
+    }
+  }
+
+  // Bottom face vertices (normal points along -n).
+  uint32_t bottom_base = static_cast<uint32_t>(positions.size());
+  for (int r = 0; r <= num_minor_subdivs; r++) {
+    float t = static_cast<float>(r) / static_cast<float>(num_minor_subdivs);
+    float radius = glm::mix(inner_radius, outer_radius, t);
+    for (int seg = 0; seg <= num_major_subdivs; seg++) {
+      float angle = 2.0f * glm::pi<float>() * static_cast<float>(seg) / static_cast<float>(num_major_subdivs);
+      glm::vec3 radial = u * std::cos(angle) + v * std::sin(angle);
+      positions.push_back(center + radial * radius);
+      normals.push_back(-n);
+    }
+  }
+
+  // Bottom face indices (reversed winding).
+  for (int r = 0; r < num_minor_subdivs; r++) {
+    for (int seg = 0; seg < num_major_subdivs; seg++) {
+      uint32_t curr = bottom_base + r * verts_per_ring + seg;
+      uint32_t next = curr + verts_per_ring;
+      indices.insert(indices.end(), {curr, curr + 1, next, curr + 1, next + 1, next});
+    }
+  }
+
+  return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
+}
+
 }  // namespace hyper
 

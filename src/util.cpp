@@ -5,7 +5,9 @@
 
 #include "src/util.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -576,7 +578,7 @@ int RaySphereIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   }
 }
 
-int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
+int RayPlaneIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                       glm::vec3 plane_normal, glm::vec3 plane_point,
                       float* result_t) {
   float denom = glm::dot(plane_normal, ray_dir);
@@ -586,6 +588,23 @@ int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
   }
   *result_t = glm::dot(plane_point - ray_point, plane_normal) / denom;
   return 1;
+}
+
+int RayRingIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 ring_center, glm::vec3 ring_normal,
+                     float outer_radius, float inner_radius,
+                     float* result_t) {
+  float t;
+  if (RayPlaneIntersect(ray_point, ray_dir, ring_normal, ring_center, &t) == 0) {
+    return 0;
+  }
+  glm::vec3 hit = ray_point + t * ray_dir;
+  float dist2 = glm::dot(hit - ring_center, hit - ring_center);
+  if (dist2 >= inner_radius * inner_radius && dist2 <= outer_radius * outer_radius) {
+    *result_t = t;
+    return 1;
+  }
+  return 0;
 }
 
 // The axis of the cylinder is from start to end with the given radius.

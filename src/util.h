@@ -145,9 +145,14 @@ int RayConeIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
 // normal. Returns the number of solutions {0, 1}. When 1, *result_t is set
 // to the value of t along the ray at the intersection. Returns 0 if the
 // ray is parallel to the plane.
-int RayIntersectPlane(glm::vec3 ray_point, glm::vec3 ray_dir,
+int RayPlaneIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                       glm::vec3 plane_normal, glm::vec3 plane_point,
                       float* result_t);
+
+int RayRingIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 ring_center, glm::vec3 ring_normal,
+                     float outer_radius, float inner_radius,
+                     float* result_t);
 
 // Create a pick ray from screen pos and RenderParams
 void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,

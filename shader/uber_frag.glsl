@@ -69,7 +69,11 @@ in vec2 frag_uv1;
 #endif
 
 #ifdef HAS_VERTEX_COLORS
-in vec4 frag_color;
+in vec4 frag_base_color;
+#endif
+
+#ifdef HAS_EMISSIVE_VERTEX_COLORS
+in vec3 frag_emissive_color;
 #endif
 
 out vec4 out_color;
@@ -188,7 +192,7 @@ void main() {
 
 #ifdef HAS_VERTEX_COLORS
   // only apply rgb for now
-  base_color.rgb *= frag_color.rgb;
+  base_color.rgb *= frag_base_color.rgb;
 #endif
 
 #ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
@@ -242,6 +246,10 @@ void main() {
 #endif
 #else
   vec3 emissive_color = emissive_color_factor;
+#endif
+
+#ifdef HAS_EMISSIVE_VERTEX_COLORS
+  emissive_color += frag_emissive_color;
 #endif
 
 #ifdef HAS_SPECULAR

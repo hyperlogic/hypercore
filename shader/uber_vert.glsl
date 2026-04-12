@@ -49,7 +49,12 @@ out vec3 frag_normal;  // world space
 
 #ifdef HAS_VERTEX_COLORS
 in vec4 color;
-out vec4 frag_color;
+out vec4 frag_base_color;
+#endif
+
+#ifdef HAS_EMISSIVE_VERTEX_COLORS
+in vec3 emissive_color;
+out vec3 frag_emissive_color;
 #endif
 
 void main(void) {
@@ -81,6 +86,10 @@ void main(void) {
 #endif
 
 #ifdef HAS_VERTEX_COLORS
-	frag_color = color;
+	frag_base_color = color;
+#endif
+
+#ifdef HAS_EMISSIVE_VERTEX_COLORS
+	frag_emissive_color = emissive_color;
 #endif
 }

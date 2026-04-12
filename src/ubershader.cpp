@@ -58,6 +58,9 @@ std::shared_ptr<Program> UberShaderCache::GetOrCreate(const UberShaderVariantKey
     if (key & UberShaderVariantFlags::HAS_VERTEX_COLORS) {
       mat_info += "#define HAS_VERTEX_COLORS\n";
     }
+    if (key & UberShaderVariantFlags::HAS_EMISSIVE_VERTEX_COLORS) {
+      mat_info += "#define HAS_EMISSIVE_VERTEX_COLORS\n";
+    }
     if (key & UberShaderVariantFlags::HAS_SPECULAR) {
       mat_info += "#define HAS_SPECULAR\n";
     }

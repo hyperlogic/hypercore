@@ -21,7 +21,6 @@
 
 namespace hyper {
 
-
 const glm::vec3 kLightDir(1.0f, 1.0f, 0.0f);
 const glm::vec3 kLightColor(1.0f, 1.0f, 1.0f);
 const glm::vec3 kAmbientColor(0.2f, 0.2f, 0.2f);
@@ -30,18 +29,21 @@ DynMesh::DynMesh(std::shared_ptr<UberMaterial> mat,
                  std::shared_ptr<Node> node)
     : mat_(mat), node_(node) {
   // only supported key at the moment.
-  assert(mat_->key() == static_cast<UberShaderVariantKey>(UberShaderVariantFlags::HAS_VERTEX_COLORS));
+  assert(mat_->key() == static_cast<UberShaderVariantKey>(UberShaderVariantFlags::HAS_VERTEX_COLORS |
+                                                          UberShaderVariantFlags::HAS_EMISSIVE_VERTEX_COLORS));
 }
 
 void DynMesh::Clear() {
   geom_batch_.Clear();
   color_batch_.clear();
+  emissive_color_batch_.clear();
   dirty_ = true;
 }
 
-void DynMesh::Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color) {
+void DynMesh::Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color, glm::vec3 emissive_color) {
   geom_batch_.Push(geom, xform);
   color_batch_.insert(color_batch_.end(), geom.pos_vec().size(), color);
+  emissive_color_batch_.insert(emissive_color_batch_.end(), geom.pos_vec().size(), emissive_color);
   dirty_ = true;
 }
 
@@ -72,6 +74,14 @@ void DynMesh::Render(const RenderParams& render_params) {
         color_buffer_->Update(color_batch_);
       } else {
         color_buffer_ = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, color_batch_, GL_DYNAMIC_STORAGE_BIT);
+      }
+    }
+    if (mat_->key() & UberShaderVariantFlags::HAS_EMISSIVE_VERTEX_COLORS) {
+      if (emissive_color_buffer_ && emissive_color_buffer_->num_elements() >= emissive_color_batch_.size()) {
+        emissive_color_buffer_->Update(emissive_color_batch_);
+      } else {
+        emissive_color_buffer_ = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, emissive_color_batch_,
+                                                                GL_DYNAMIC_STORAGE_BIT);
       }
     }
     if (index_buffer_ && index_buffer_->num_elements() >= geom_batch_.index_vec().size()) {
@@ -113,8 +123,13 @@ void DynMesh::Render(const RenderParams& render_params) {
   SetAttribBuffer(norm_loc, norm_buffer_);
 
   if (mat_->key() & UberShaderVariantFlags::HAS_VERTEX_COLORS) {
-    int color_loc = mat_->prog()->GetAttribLoc("color");
-    SetAttribBuffer(color_loc, color_buffer_);
+    int loc = mat_->prog()->GetAttribLoc("color");
+    SetAttribBuffer(loc, color_buffer_);
+  }
+
+  if (mat_->key() & UberShaderVariantFlags::HAS_EMISSIVE_VERTEX_COLORS) {
+    int loc = mat_->prog()->GetAttribLoc("emissive_color");
+    SetAttribBuffer(loc, emissive_color_buffer_);
   }
 
   index_buffer_->Bind();

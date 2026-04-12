@@ -29,7 +29,7 @@ class DynMesh {
           std::shared_ptr<Node> node);
 
   void Clear();
-  void Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color);
+  void Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color, glm::vec3 emissive_color);
 
   virtual void Render(const RenderParams& render_params);
 
@@ -40,11 +40,13 @@ class DynMesh {
   std::shared_ptr<Node> node_;
   Geom geom_batch_;
   std::vector<glm::vec4> color_batch_;
+  std::vector<glm::vec3> emissive_color_batch_;
   bool dirty_;
   std::shared_ptr<BufferObject> pos_buffer_;
   std::shared_ptr<BufferObject> uv_buffer_;
   std::shared_ptr<BufferObject> norm_buffer_;
   std::shared_ptr<BufferObject> color_buffer_;
+  std::shared_ptr<BufferObject> emissive_color_buffer_;
   std::shared_ptr<BufferObject> index_buffer_;
   std::shared_ptr<VertexArrayObject> vao_;
 };

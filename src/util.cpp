@@ -356,10 +356,12 @@ static std::vector<std::string> search_paths = [] {
   // enables us to run from the build dir
   paths.push_back("../");
   paths.push_back("../hypercore/");
+  paths.push_back("../../hypercore/");
 #else
   // enables us to run from the build/Debug dir
   paths.push_back("../../");
   paths.push_back("../../hypercore/");
+  paths.push_back("../../../hypercore/");
 #endif
 #endif
   return paths;

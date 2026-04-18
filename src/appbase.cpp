@@ -186,8 +186,7 @@ AppBase::AppBase(MainContext& main_context_in)
       fps_vec_(),
       floor_(nullptr),
       scene_z_up_(false),
-      scene_cm_units_(false),
-      scene_mat_(1.0f) {
+      scene_cm_units_(false) {
   usage_.push_back({ UNKNOWN, 0, "", "", option::Arg::None,
       "USAGE: assimpbuddy [options]\n\nOptions:" });
   usage_.push_back({ HELP, 0, "h", "help", option::Arg::None,
@@ -558,8 +557,20 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
           glm::lookAt(EYE_POS, char_pos, glm::vec3(0.0f, 1.0f, 0.0f)));
     }
 
-    // apply scene_mat
-    camera_mat = glm::inverse(scene_mat_) * camera_mat;
+    // update scene_mat
+    glm::quat scene_rot(1.0f, 0.0f, 0.0f, 0.0f);
+    if (scene_z_up_) {
+      scene_rot = glm::quat(-0.7071f, 0.7071f, 0.0f, 0.0f);
+    }
+    glm::vec3 scene_scale(1.0f, 1.0f, 1.0f);
+    if (scene_cm_units_) {
+      scene_scale = glm::vec3(0.01f, 0.01f, 0.01f);
+    }
+    glm::mat4 scene_mat = MakeMat4(scene_scale, scene_rot,
+                                   glm::vec3(0.0f, 0.0f, 0.0f));
+
+    // apply scene_mat to camera
+    camera_mat = glm::inverse(scene_mat) * camera_mat;
 
     glm::vec4 viewport(0.0f, 0.0f, static_cast<float>(width),
                        static_cast<float>(height));
@@ -577,7 +588,7 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
     // keep the floor aligned to world up, and world units.
     if (!scene_hide_floor_) {
       RenderParams floor_params = render_params;
-      floor_params.camera_mat = scene_mat_ * camera_mat;
+      floor_params.camera_mat = scene_mat * camera_mat;
       floor_->Render(floor_params);
     }
 
@@ -682,25 +693,8 @@ void AppBase::RenderImGui() {
     }
     if (ImGui::BeginMenu("Scene")) {
       ImGui::MenuItem("Hide Floor", nullptr, &scene_hide_floor_);
-      bool scene_mat_changed = false;
-      if (ImGui::MenuItem("Z-up", nullptr, &scene_z_up_)) {
-        scene_mat_changed = true;
-      }
-      if (ImGui::MenuItem("CM Units", nullptr, &scene_cm_units_)) {
-        scene_mat_changed = true;
-      }
-      if (scene_mat_changed) {
-        glm::quat scene_rot(1.0f, 0.0f, 0.0f, 0.0f);
-        if (scene_z_up_) {
-          scene_rot = glm::quat(-0.7071f, 0.7071f, 0.0f, 0.0f);
-        }
-        glm::vec3 scene_scale(1.0f, 1.0f, 1.0f);
-        if (scene_cm_units_) {
-          scene_scale = glm::vec3(0.01f, 0.01f, 0.01f);
-        }
-        scene_mat_ = MakeMat4(scene_scale, scene_rot,
-                              glm::vec3(0.0f, 0.0f, 0.0f));
-      }
+      ImGui::MenuItem("Z-up", nullptr, &scene_z_up_);
+      ImGui::MenuItem("CM Units", nullptr, &scene_cm_units_);
       ImGui::EndMenu();
     }
     if (!RenderImGuiMenuBarImpl()) {

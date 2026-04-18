@@ -131,7 +131,6 @@ class AppBase {
   bool scene_hide_floor_ = false;
   bool scene_z_up_ = false;
   bool scene_cm_units_ = false;
-  glm::mat4 scene_mat_;
 };
 
 }  // namespace hyper

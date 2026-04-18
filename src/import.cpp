@@ -108,7 +108,7 @@ class MyLogStream : public Assimp::LogStream {
  public:
   // Write something using your own functionality
   void write(const char* message) {
-    Log::E("%s\n", message);
+    Log::E("%s", message);
   }
 };
 

@@ -31,7 +31,8 @@ class Geom {
   static Geom MakeBoneOctahedron(glm::vec3 start, glm::quat rot, glm::vec3 end, float radius);
   static Geom MakeRing(glm::vec3 center, glm::vec3 normal, float outer_radius, float inner_radius,
                        int num_major_subdivs, int num_minor_subdivs);
-
+  static Geom MakePlane(glm::vec3 center, glm::vec3 normal, glm::vec3 tangent,
+                        float size, int num_subdivs);
   static Geom MoveFromBuffers(std::vector<glm::vec3> pos,
                               std::vector<glm::vec3> norm,
                               std::vector<uint32_t> indices);

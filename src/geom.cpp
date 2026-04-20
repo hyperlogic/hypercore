@@ -461,5 +461,48 @@ Geom Geom::MakeRing(glm::vec3 center, glm::vec3 normal, float outer_radius, floa
   return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
 }
 
+Geom Geom::MakePlane(glm::vec3 center, glm::vec3 normal, glm::vec3 tangent,
+                     float size, int num_subdivs) {
+  glm::vec3 n = SafeNormalize(normal, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  // Project tangent onto the plane perpendicular to the normal to build a
+  // predictable basis. If tangent is degenerate (zero or parallel to normal),
+  // fall back to a stable axis.
+  glm::vec3 t_proj = tangent - n * glm::dot(tangent, n);
+  glm::vec3 fallback = (std::abs(glm::dot(n, glm::vec3(1, 0, 0))) < 0.99f)
+                          ? glm::vec3(1, 0, 0) : glm::vec3(0, 0, 1);
+  fallback = glm::normalize(fallback - n * glm::dot(fallback, n));
+  glm::vec3 u = SafeNormalize(t_proj, fallback);
+  glm::vec3 v = glm::cross(n, u);
+
+  std::vector<glm::vec3> positions;
+  std::vector<glm::vec3> normals;
+  std::vector<uint32_t> indices;
+
+  int verts_per_row = num_subdivs + 1;
+  float half = size * 0.5f;
+
+  for (int j = 0; j <= num_subdivs; j++) {
+    float tj = static_cast<float>(j) / static_cast<float>(num_subdivs);
+    float vc = glm::mix(-half, half, tj);
+    for (int i = 0; i <= num_subdivs; i++) {
+      float ti = static_cast<float>(i) / static_cast<float>(num_subdivs);
+      float uc = glm::mix(-half, half, ti);
+      positions.push_back(center + u * uc + v * vc);
+      normals.push_back(n);
+    }
+  }
+
+  for (int j = 0; j < num_subdivs; j++) {
+    for (int i = 0; i < num_subdivs; i++) {
+      uint32_t curr = j * verts_per_row + i;
+      uint32_t next = curr + verts_per_row;
+      indices.insert(indices.end(), {curr, next, curr + 1, curr + 1, next, next + 1});
+    }
+  }
+
+  return MoveFromBuffers(std::move(positions), std::move(normals), std::move(indices));
+}
+
 }  // namespace hyper
 

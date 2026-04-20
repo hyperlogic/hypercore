@@ -592,6 +592,32 @@ int RayPlaneIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
   return 1;
 }
 
+int RayQuadIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 quad_center, glm::vec3 quad_normal,
+                     glm::vec3 quad_tangent, float size,
+                     float* result_t) {
+  float t;
+  if (RayPlaneIntersect(ray_point, ray_dir, quad_normal, quad_center, &t) == 0) {
+    return 0;
+  }
+  glm::vec3 n = SafeNormalize(quad_normal, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::vec3 t_proj = quad_tangent - n * glm::dot(quad_tangent, n);
+  glm::vec3 fallback = (std::abs(glm::dot(n, glm::vec3(1, 0, 0))) < 0.99f)
+                          ? glm::vec3(1, 0, 0) : glm::vec3(0, 0, 1);
+  fallback = glm::normalize(fallback - n * glm::dot(fallback, n));
+  glm::vec3 u = SafeNormalize(t_proj, fallback);
+  glm::vec3 v = glm::cross(n, u);
+
+  glm::vec3 hit = ray_point + t * ray_dir;
+  glm::vec3 d = hit - quad_center;
+  float half = size * 0.5f;
+  if (std::abs(glm::dot(d, u)) <= half && std::abs(glm::dot(d, v)) <= half) {
+    *result_t = t;
+    return 1;
+  }
+  return 0;
+}
+
 int RayRingIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                      glm::vec3 ring_center, glm::vec3 ring_normal,
                      float outer_radius, float inner_radius,

@@ -149,6 +149,11 @@ int RayPlaneIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                       glm::vec3 plane_normal, glm::vec3 plane_point,
                       float* result_t);
 
+int RayQuadIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
+                     glm::vec3 quad_center, glm::vec3 quad_normal,
+                     glm::vec3 quad_tangent, float size,
+                     float* result_t);
+
 int RayRingIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                      glm::vec3 ring_center, glm::vec3 ring_normal,
                      float outer_radius, float inner_radius,

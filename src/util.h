@@ -164,4 +164,8 @@ void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,
                     glm::vec3* ray_point, glm::vec3* ray_dir);
 
 
+// just the zero'th order dc
+glm::vec3 ComputeColorFromSH(float dc_0, float dc_1, float dc_2);
+
+
 }  // namespace hyper

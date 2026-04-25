@@ -811,4 +811,11 @@ void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,
   *ray_dir = glm::normalize(far_world - near_world);
 }
 
+glm::vec3 ComputeColorFromSH(float dc_0, float dc_1, float dc_2) {
+  // zeroth order
+  // (/ 1.0 (* 2.0 (sqrt pi)))
+  constexpr float SH_C0 = 0.28209479177387814f;
+  return glm::vec3(0.5f + SH_C0 * dc_0, 0.5f + SH_C0 * dc_1, 0.5f * SH_C0 * dc_2);
+}
+
 }  // namespace hyper

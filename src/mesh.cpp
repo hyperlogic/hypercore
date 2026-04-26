@@ -13,6 +13,7 @@
 
 #include "src/glincludes.h"
 #include "src/program.h"
+#include "src/render.h"
 #include "src/texture.h"
 #include "src/ubermaterial.h"
 #include "src/util.h"

@@ -45,6 +45,7 @@
 #include "src/mesh.h"
 #include "src/optionparser.h"
 #include "src/program.h"
+#include "src/render.h"
 #include "src/textrenderer.h"
 #include "src/texture.h"
 #include "src/util.h"

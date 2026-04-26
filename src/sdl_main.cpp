@@ -33,6 +33,7 @@
 
 #include "src/appbase.h"
 #include "src/log.h"
+#include "src/render.h"
 #include "src/util.h"
 
 #ifdef _WIN32

@@ -22,6 +22,8 @@ union SDL_Event;
 
 namespace hyper {
 
+struct RenderParams;
+
 class CheckerFloor;
 class DebugRenderer;
 class FlyCam;

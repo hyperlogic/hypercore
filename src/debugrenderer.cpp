@@ -12,6 +12,7 @@
 #include "src/log.h"
 #include "src/util.h"
 #include "src/program.h"
+#include "src/render.h"
 #include "src/vertexbuffer.h"
 
 namespace hyper {

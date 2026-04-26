@@ -16,6 +16,7 @@
 #include "src/glincludes.h"
 
 #include "src/log.h"
+#include "src/render.h"
 #include "src/util.h"
 
 #ifndef NDEBUG

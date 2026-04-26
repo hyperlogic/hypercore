@@ -13,13 +13,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#ifndef NDEBUG
-#define GL_ERROR_CHECK(x) GLErrorCheck(x)
-void GLErrorCheck(const char* message);
-#else
-#define GL_ERROR_CHECK(x)
-#endif
-
 #define DISABLE_COPY_AND_MOVE(ClassName) \
     ClassName(const ClassName&) = delete; \
     ClassName& operator=(const ClassName&) = delete; \
@@ -27,13 +20,6 @@ void GLErrorCheck(const char* message);
     ClassName& operator=(ClassName&&) = delete
 
 namespace hyper {
-
-struct RenderParams {
-  glm::mat4 camera_mat;
-  glm::mat4 proj_mat;
-  glm::vec4 viewport;
-  glm::vec2 near_far;
-};
 
 // returns true on success, false on failure
 bool LoadFile(const std::string& filename, std::string& result);
@@ -94,24 +80,8 @@ std::string FindFile(const std::string& filename);
 
 bool PointInsideAABB(const glm::vec3& point, const glm::vec3& aabb_min,
                      const glm::vec3& aabb_max);
-float LinearToSRGB(float linear);
-float SRGBToLinear(float srgb);
-glm::vec4 LinearToSRGB(const glm::vec4& linear_color);
-glm::vec4 SRGBToLinear(const glm::vec4& srgb_color);
 
 glm::mat4 MakeRotateAboutPointMat(const glm::vec3& pos, const glm::quat& rot);
-
-enum GraphicsAPI {
-  GRAPHICS_VULKAN,
-  GRAPHICS_OPENGL,
-  GRAPHICS_OPENGL_ES,
-  GRAPHICS_D3D
-};
-void CreateProjection(float* m, GraphicsAPI graphics_api,
-                      const float tan_angle_left,
-                      const float tan_angle_right, const float tan_angle_up,
-                      float const tan_angle_down, const float near_z,
-                      const float far_z);
 
 void StrCpy_s(char* dest, size_t destsz, const char* src);
 
@@ -158,14 +128,5 @@ int RayRingIntersect(glm::vec3 ray_point, glm::vec3 ray_dir,
                      glm::vec3 ring_center, glm::vec3 ring_normal,
                      float outer_radius, float inner_radius,
                      float* result_t);
-
-// Create a pick ray from screen pos and RenderParams
-void ComputePickRay(glm::ivec2 screen_pos, const RenderParams& render_params,
-                    glm::vec3* ray_point, glm::vec3* ray_dir);
-
-
-// just the zero'th order dc
-glm::vec3 ComputeColorFromSH(float dc_0, float dc_1, float dc_2);
-
 
 }  // namespace hyper

@@ -48,6 +48,22 @@ uniform vec3 light_direct_dir;
 uniform vec3 light_direct_color;
 uniform vec3 light_ambient_color;
 
+#ifdef HAS_ENV_IRRADIANCE_SH
+// "Peter-Pike Sloan" packing — 4 vec4s per channel, 12 vec4s total = 48 floats, "Stupid SH Tricks"
+uniform vec4 r_sh0;  // sh coeff for red channel (up to third-order)
+uniform vec4 r_sh1;
+uniform vec4 r_sh2;
+uniform vec4 r_sh3;
+uniform vec4 g_sh0;  // sh coeff for green channel
+uniform vec4 g_sh1;
+uniform vec4 g_sh2;
+uniform vec4 g_sh3;
+uniform vec4 b_sh0;  // sh coeff for blue channel
+uniform vec4 b_sh1;
+uniform vec4 b_sh2;
+uniform vec4 b_sh3;
+#endif
+
 uniform vec4 base_color_factor;
 uniform float metallic_factor;
 uniform float roughness_factor;
@@ -130,7 +146,6 @@ float V_GGX(float NdotL, float NdotV, float alphaRoughness) {
   return 0.0;
 }
 
-
 // The following equation(s) model the distribution of microfacet normals across the area being drawn (aka D())
 // Implementation from "Average Irregularity Representation of a Roughened Surface for Ray Reflection" by T. S. Trowbridge, and K. P. Reitz
 // Follows the distribution function recommended in the SIGGRAPH 2013 course notes from EPIC Games [1], Equation 3.
@@ -158,6 +173,18 @@ vec3 BRDF_lambertian(vec3 diffuseColor) {
   // see https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
   return (diffuseColor / M_PI);
 }
+
+#ifdef HAS_ENV_IRRADIANCE_SH
+// assume n is normalized
+vec3 EvalIrradianceSH(vec3 n) {
+    // Each matrix encodes the 9 SH coefficients folded with the
+    // Lambertian kernel constants for one color channel
+    mat4 Mr = mat4(r_sh0, r_sh1, r_sh2, r_sh3);
+    mat4 Mg = mat4(g_sh0, g_sh1, g_sh2, g_sh3);
+    mat4 Mb = mat4(b_sh0, b_sh1, b_sh2, b_sh3);
+    return vec3(dot(n, Mr * n), dot(n, Mg * n), dot(n, Mb * n));
+}
+#endif
 
 void main() {
   vec3 v = normalize(camera_pos - frag_position);
@@ -252,12 +279,21 @@ void main() {
   emissive_color += frag_emissive_color;
 #endif
 
-#ifdef HAS_SPECULAR
-  vec3 ambient = f_diffuse * light_ambient_color;
+#ifdef HAS_ENV_IRRADIANCE_SH
+    // SH replaces the constant ambient term entirely
+    vec3 indirect_diffuse = EvalIrradianceSH(n);
 #else
-  vec3 ambient = light_ambient_color * (c_diff + f0);
-  //vec3 ambient = light_ambient_color * ((1.0 - F_diffuse) * c_diff + F_diffuse);
+    // Fallback: flat ambient when no SH probe is available
+    vec3 indirect_diffuse = light_ambient_color;
 #endif
+
+#ifdef HAS_SPECULAR
+  vec3 ambient = f_diffuse * indirect_diffuse;
+#else
+  vec3 ambient = indirect_diffuse * (c_diff + f0);
+  //vec3 ambient = indirect_diffuse * ((1.0 - F_diffuse) * c_diff + F_diffuse);
+#endif
+
   vec3 final_color = ambient + l_color + emissive_color;
 
   // premultiplied alpha blending

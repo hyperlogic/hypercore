@@ -17,9 +17,10 @@
 
 #include "src/image.h"
 #include "src/log.h"
-#include "src/util.h"
 #include "src/program.h"
+#include "src/render.h"
 #include "src/texture.h"
+#include "src/util.h"
 #include "src/vertexbuffer.h"
 
 namespace hyper {

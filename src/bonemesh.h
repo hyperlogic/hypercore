@@ -16,6 +16,8 @@
 
 namespace hyper {
 
+struct RenderPrams;
+
 class UberMaterial;
 
 class BoneMesh : public Mesh {

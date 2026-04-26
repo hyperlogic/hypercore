@@ -38,7 +38,7 @@ struct LightingParams {
   glm::vec3 direct_dir;
   glm::vec3 direct_color;
   glm::vec3 ambient_color;
-  EnvIrradianceSH env_irradiance_sh;
+  EnvIrradianceSH env_irr_sh;
 };
 
 float LinearToSRGB(float linear);

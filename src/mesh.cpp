@@ -16,6 +16,7 @@
 #include "src/render.h"
 #include "src/texture.h"
 #include "src/ubermaterial.h"
+#include "src/ubershader.h"
 #include "src/util.h"
 #include "src/vertexbuffer.h"
 
@@ -43,7 +44,22 @@ void Mesh::Render(const RenderParams& r_params, const LightingParams& l_params) 
 
   mat_->prog()->SetUniform("light_direct_dir", glm::normalize(l_params.direct_dir));
   mat_->prog()->SetUniform("light_direct_color", l_params.direct_color);
-  mat_->prog()->SetUniform("light_ambient_color", l_params.ambient_color);
+  if (mat_->key() & UberShaderVariantFlags::HAS_ENV_IRRADIANCE_SH) {
+    mat_->prog()->SetUniform("env_irr_r_sh0", l_params.env_irr_sh.r_sh0);
+    mat_->prog()->SetUniform("env_irr_r_sh1", l_params.env_irr_sh.r_sh1);
+    mat_->prog()->SetUniform("env_irr_r_sh2", l_params.env_irr_sh.r_sh2);
+    mat_->prog()->SetUniform("env_irr_r_sh3", l_params.env_irr_sh.r_sh3);
+    mat_->prog()->SetUniform("env_irr_g_sh0", l_params.env_irr_sh.g_sh0);
+    mat_->prog()->SetUniform("env_irr_g_sh1", l_params.env_irr_sh.g_sh1);
+    mat_->prog()->SetUniform("env_irr_g_sh2", l_params.env_irr_sh.g_sh2);
+    mat_->prog()->SetUniform("env_irr_g_sh3", l_params.env_irr_sh.g_sh3);
+    mat_->prog()->SetUniform("env_irr_b_sh0", l_params.env_irr_sh.b_sh0);
+    mat_->prog()->SetUniform("env_irr_b_sh1", l_params.env_irr_sh.b_sh1);
+    mat_->prog()->SetUniform("env_irr_b_sh2", l_params.env_irr_sh.b_sh2);
+    mat_->prog()->SetUniform("env_irr_b_sh3", l_params.env_irr_sh.b_sh3);
+  } else {
+    mat_->prog()->SetUniform("light_ambient_color", l_params.ambient_color);
+  }
 
   vao_->DrawElements(GL_TRIANGLES);
 }

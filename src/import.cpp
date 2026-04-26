@@ -285,6 +285,7 @@ static std::shared_ptr<UberMaterial> BuildDefaultMaterial(
   }
 
   UberShaderVariantKey key = 0;
+  key |= UberShaderVariantFlags::HAS_ENV_IRRADIANCE_SH;
   if (base_color_tex_info.texture) {
     key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
     key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
@@ -387,6 +388,7 @@ static std::shared_ptr<UberMaterial> BuildPbrMaterial(
   auto metallic_roughness_tex_info = LoadTextureInfoFromMat(material, aiTextureType_GLTF_METALLIC_ROUGHNESS,
                                                               image_vec, asset_filename);
   UberShaderVariantKey key = 0;
+  key |= UberShaderVariantFlags::HAS_ENV_IRRADIANCE_SH;
   if (base_color_tex_info.texture) {
     key |= UberShaderVariantFlags::HAS_BASE_TEXTURE;
     if (base_color_tex_info.uv_index == 0) {

@@ -50,18 +50,18 @@ uniform vec3 light_ambient_color;
 
 #ifdef HAS_ENV_IRRADIANCE_SH
 // "Peter-Pike Sloan" packing — 4 vec4s per channel, 12 vec4s total = 48 floats, "Stupid SH Tricks"
-uniform vec4 r_sh0;  // sh coeff for red channel (up to third-order)
-uniform vec4 r_sh1;
-uniform vec4 r_sh2;
-uniform vec4 r_sh3;
-uniform vec4 g_sh0;  // sh coeff for green channel
-uniform vec4 g_sh1;
-uniform vec4 g_sh2;
-uniform vec4 g_sh3;
-uniform vec4 b_sh0;  // sh coeff for blue channel
-uniform vec4 b_sh1;
-uniform vec4 b_sh2;
-uniform vec4 b_sh3;
+uniform vec4 env_irr_r_sh0;  // sh coeff for red channel (up to third-order)
+uniform vec4 env_irr_r_sh1;
+uniform vec4 env_irr_r_sh2;
+uniform vec4 env_irr_r_sh3;
+uniform vec4 env_irr_g_sh0;  // sh coeff for green channel
+uniform vec4 env_irr_g_sh1;
+uniform vec4 env_irr_g_sh2;
+uniform vec4 env_irr_g_sh3;
+uniform vec4 env_irr_b_sh0;  // sh coeff for blue channel
+uniform vec4 env_irr_b_sh1;
+uniform vec4 env_irr_b_sh2;
+uniform vec4 env_irr_b_sh3;
 #endif
 
 uniform vec4 base_color_factor;
@@ -176,13 +176,14 @@ vec3 BRDF_lambertian(vec3 diffuseColor) {
 
 #ifdef HAS_ENV_IRRADIANCE_SH
 // assume n is normalized
-vec3 EvalIrradianceSH(vec3 n) {
-    // Each matrix encodes the 9 SH coefficients folded with the
-    // Lambertian kernel constants for one color channel
-    mat4 Mr = mat4(r_sh0, r_sh1, r_sh2, r_sh3);
-    mat4 Mg = mat4(g_sh0, g_sh1, g_sh2, g_sh3);
-    mat4 Mb = mat4(b_sh0, b_sh1, b_sh2, b_sh3);
-    return vec3(dot(n, Mr * n), dot(n, Mg * n), dot(n, Mb * n));
+vec3 EvalIrradianceSH(vec3 N) {
+  vec4 n = vec4(N, 1.0);
+  // Each matrix encodes the 9 SH coefficients folded with the
+  // Lambertian kernel constants for one color channel
+  mat4 Mr = mat4(env_irr_r_sh0, env_irr_r_sh1, env_irr_r_sh2, env_irr_r_sh3);
+  mat4 Mg = mat4(env_irr_g_sh0, env_irr_g_sh1, env_irr_g_sh2, env_irr_g_sh3);
+  mat4 Mb = mat4(env_irr_b_sh0, env_irr_b_sh1, env_irr_b_sh2, env_irr_b_sh3);
+  return vec3(dot(n, Mr * n), dot(n, Mg * n), dot(n, Mb * n));
 }
 #endif
 

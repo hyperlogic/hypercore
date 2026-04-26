@@ -29,6 +29,7 @@ enum class UberShaderVariantFlags : uint32_t {
   HAS_VERTEX_COLORS = (1 << 9),
   HAS_EMISSIVE_VERTEX_COLORS = (1 << 10),
   HAS_SPECULAR = (1 << 11),
+  HAS_ENV_IRRADIANCE_SH = (1 << 12)
 };
 
 inline constexpr UberShaderVariantFlags operator|(UberShaderVariantFlags a, UberShaderVariantFlags b) {

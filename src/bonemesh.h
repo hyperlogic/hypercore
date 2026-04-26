@@ -17,6 +17,7 @@
 namespace hyper {
 
 struct RenderPrams;
+struct LightingPrams;
 
 class UberMaterial;
 
@@ -28,7 +29,7 @@ class BoneMesh : public Mesh {
            std::vector<glm::mat4> inv_bind_pose_vec_in);
   ~BoneMesh() override;
 
-  void Render(const RenderParams& render_params) override;
+  void Render(const RenderParams& r_params, const LightingParams& l_params) override;
 
  protected:
   void InitTbo();

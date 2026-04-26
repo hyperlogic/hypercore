@@ -16,6 +16,7 @@
 namespace hyper {
 
 struct RenderParams;
+struct LightingParams;
 
 class UberMaterial;
 class VertexArrayObject;
@@ -42,7 +43,7 @@ class Mesh {
                                                   const std::shared_ptr<Node>& node,
                                                   glm::vec3 start, glm::vec3 end, float radius);
 
-  virtual void Render(const RenderParams& render_params);
+  virtual void Render(const RenderParams& r_params, const LightingParams& l_params);
 
  protected:
   std::shared_ptr<VertexArrayObject> vao_;

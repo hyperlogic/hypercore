@@ -90,7 +90,7 @@ class AppBase {
                            glm::vec2 face_dir,
                            glm::vec2 move_dir) = 0;
 
-  virtual bool RenderImpl(const RenderParams& render_params) = 0;
+  virtual bool RenderImpl(const RenderParams& r_params) = 0;
   virtual bool RenderImGuiMenuBarImpl() = 0;
   virtual bool RenderImGuiImpl() = 0;
 

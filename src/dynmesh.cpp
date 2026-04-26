@@ -48,11 +48,11 @@ void DynMesh::Push(const Geom& geom, const glm::mat4& xform, glm::vec4 color, gl
   dirty_ = true;
 }
 
-void DynMesh::Render(const RenderParams& render_params) {
+void DynMesh::Render(const RenderParams& r_params, const LightingParams& l_params) {
   glm::mat4 model_mat = node_->abs_xform();
-  glm::mat4 view_mat = glm::inverse(render_params.camera_mat);
+  glm::mat4 view_mat = glm::inverse(r_params.camera_mat);
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
-  glm::vec3 camera_pos = glm::vec3(render_params.camera_mat[3]);
+  glm::vec3 camera_pos = glm::vec3(r_params.camera_mat[3]);
 
   if (geom_batch_.pos_vec().size() == 0 ||
       geom_batch_.index_vec().size() == 0) {
@@ -103,12 +103,12 @@ void DynMesh::Render(const RenderParams& render_params) {
   mat_->prog()->SetUniform("camera_pos", camera_pos);
   mat_->prog()->SetUniform("model_mat", model_mat);
   mat_->prog()->SetUniform("view_mat", view_mat);
-  mat_->prog()->SetUniform("proj_mat", render_params.proj_mat);
+  mat_->prog()->SetUniform("proj_mat", r_params.proj_mat);
   mat_->prog()->SetUniform("normal_model_mat", normal_model_mat);
 
-  mat_->prog()->SetUniform("light_direct_dir", glm::normalize(kLightDir));
-  mat_->prog()->SetUniform("light_direct_color", kLightColor);
-  mat_->prog()->SetUniform("light_ambient_color", kAmbientColor);
+  mat_->prog()->SetUniform("light_direct_dir", glm::normalize(l_params.direct_dir));
+  mat_->prog()->SetUniform("light_direct_color", l_params.direct_color);
+  mat_->prog()->SetUniform("light_ambient_color", l_params.ambient_color);
 
   vao_->Bind();
 

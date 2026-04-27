@@ -19,6 +19,7 @@ struct RenderParams {
 };
 
 struct EnvIrradianceSH {
+  EnvIrradianceSH();
   // "Peter-Pike Sloan" packing — 4 vec4s per channel, 12 vec4s total = 48 floats, "Stupid SH Tricks"
   glm::vec4 r_sh0;  // sh coeff for red channel (up to third-order)
   glm::vec4 r_sh1;
@@ -35,6 +36,7 @@ struct EnvIrradianceSH {
 };
 
 struct LightingParams {
+  LightingParams();
   glm::vec3 direct_dir;
   glm::vec3 direct_color;
   glm::vec3 ambient_color;

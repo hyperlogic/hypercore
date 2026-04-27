@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -189,6 +190,13 @@ void Decompose(const glm::mat3& matrix, glm::vec3* scale_out,
   tmp[1] = matrix[1] * 1.0f / scale_out->y;
   tmp[2] = matrix[2] * 1.0f / scale_out->z;
   *rotation_out = glm::normalize(glm::quat_cast(tmp));
+}
+
+std::tuple<glm::vec3, glm::quat, glm::vec3> Decompose(const glm::mat4& matrix) {
+    glm::vec3 scale, translation;
+    glm::quat rotation;
+    Decompose(matrix, &scale, &rotation, &translation);
+    return {scale, rotation, translation};
 }
 
 void DecomposeSwingTwist(const glm::quat& rotation,

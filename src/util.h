@@ -49,6 +49,7 @@ void Decompose(const glm::mat4& matrix, glm::vec3* scale_out,
                glm::quat* rotation_out, glm::vec3* translation_out);
 void Decompose(const glm::mat3& matrix, glm::vec3* scale_out,
                glm::quat* rotation_out);
+std::tuple<glm::vec3, glm::quat, glm::vec3> Decompose(const glm::mat4& matrix);
 void DecomposeSwingTwist(const glm::quat& rotation, const glm::vec3& twist_axis,
                          glm::quat* swing_out, glm::quat* twist_out);
 

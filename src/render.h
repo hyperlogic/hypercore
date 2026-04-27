@@ -1,3 +1,10 @@
+/*
+    Copyright (c) 2026 Anthony J. Thibault
+    This software is licensed under the MIT License. See LICENSE for more details.
+*/
+
+#pragma once
+
 #include <glm/glm.hpp>
 
 #include "src/glincludes.h"

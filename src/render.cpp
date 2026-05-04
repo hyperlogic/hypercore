@@ -82,6 +82,14 @@ float SRGBToLinear(float srgb) {
   }
 }
 
+glm::vec3 LinearToSRGB(const glm::vec3& linear_color) {
+  glm::vec3 srgb_color;
+  for (int i = 0; i < 3; ++i) {
+    srgb_color[i] = LinearToSRGB(linear_color[i]);
+  }
+  return srgb_color;
+}
+
 glm::vec4 LinearToSRGB(const glm::vec4& linear_color) {
   glm::vec4 srgb_color;
 
@@ -90,6 +98,14 @@ glm::vec4 LinearToSRGB(const glm::vec4& linear_color) {
   }
   srgb_color.a = linear_color.a;
   return srgb_color;
+}
+
+glm::vec3 SRGBToLinear(const glm::vec3& srgb_color) {
+  glm::vec3 linear_color;
+  for (int i = 0; i < 3; ++i) {  // Convert RGB, leave A unchanged
+    linear_color[i] = SRGBToLinear(srgb_color[i]);
+  }
+  return linear_color;
 }
 
 glm::vec4 SRGBToLinear(const glm::vec4& srgb_color) {

@@ -52,7 +52,9 @@ struct LightingParams {
 
 float LinearToSRGB(float linear);
 float SRGBToLinear(float srgb);
+glm::vec3 LinearToSRGB(const glm::vec3& linear_color);
 glm::vec4 LinearToSRGB(const glm::vec4& linear_color);
+glm::vec3 SRGBToLinear(const glm::vec3& srgb_color);
 glm::vec4 SRGBToLinear(const glm::vec4& srgb_color);
 
 enum GraphicsAPI {

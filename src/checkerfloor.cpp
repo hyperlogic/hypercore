@@ -17,7 +17,7 @@
 #include "src/vertexbuffer.h"
 
 const float kFloorRadius = 100.0f;
-const float kFloorTileCount = 50.0f;
+const float kFloorTileCount = 200.0f;
 
 namespace hyper {
 

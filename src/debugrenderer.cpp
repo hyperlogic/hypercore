@@ -17,7 +17,11 @@
 
 namespace hyper {
 
-const size_t kMaxVertexCount = 32768;
+static const size_t kMaxVertexCount = 32768;
+
+static constexpr glm::vec3 kXAxis(1.0f, 0.0f, 0.0f);
+static constexpr glm::vec3 kYAxis(0.0f, 1.0f, 0.0f);
+static constexpr glm::vec3 kZAxis(0.0f, 0.0f, 1.0f);
 
 DebugRenderer::DebugRenderer() {
 }
@@ -48,15 +52,12 @@ bool DebugRenderer::Init() {
   return true;
 }
 
-void DebugRenderer::Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
-                         const glm::vec3& color) {
+void DebugRenderer::Line(glm::vec3 start_pos, glm::vec3 end_pos, glm::vec3 color) {
   Line(start_pos, end_pos, color, color);
 }
 
-void DebugRenderer::Line(const glm::vec3& start_pos,
-                         const glm::vec3& end_pos,
-                         const glm::vec3& start_color,
-                         const glm::vec3& end_color) {
+void DebugRenderer::Line(glm::vec3 start_pos, glm::vec3 end_pos,
+                         glm::vec3 start_color, glm::vec3 end_color) {
   // AJT(TODO): dynamically resize buffers
   if (line_position_vec_.size() + 2 <= kMaxVertexCount) {
     line_position_vec_.push_back(start_pos);
@@ -67,6 +68,12 @@ void DebugRenderer::Line(const glm::vec3& start_pos,
     Log::W("DebugRenderer overflow!\n");
     warn_frame_num_ = frame_num_;
   }
+}
+
+void DebugRenderer::Point(glm::vec3 pos, glm::vec3 color, float radius) {
+  Line(pos - (radius * kXAxis), pos + (radius * kXAxis), color, color);
+  Line(pos - (radius * kYAxis), pos + (radius * kYAxis), color, color);
+  Line(pos - (radius * kZAxis), pos + (radius * kZAxis), color, color);
 }
 
 void DebugRenderer::Transform(const glm::mat4& m, float axis_len) {

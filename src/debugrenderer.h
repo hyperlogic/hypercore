@@ -31,10 +31,10 @@ class DebugRenderer {
   // call at end of frame.
   void EndFrame();
 
-  void Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
-            const glm::vec3& color);
-  void Line(const glm::vec3& start_pos, const glm::vec3& end_pos,
-            const glm::vec3& start_color, const glm::vec3& end_color);
+  void Line(glm::vec3 start_pos, glm::vec3 end_pos, glm::vec3 color);
+  void Line(glm::vec3 start_pos, glm::vec3 end_pos,
+            glm::vec3 start_color, glm::vec3 end_color);
+  void Point(glm::vec3 pos, glm::vec3 color, float radius = 0.1f);
   void Transform(const glm::mat4& m, float axis_len = 1.0f);
   void Box(const glm::mat4& m, float radius, glm::vec3 color);
 

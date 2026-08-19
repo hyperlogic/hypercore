@@ -1,3 +1,8 @@
+/*
+    Copyright (c) 2026 Anthony J. Thibault
+    This software is licensed under the MIT License. See LICENSE for more details.
+*/
+
 #include "src/render.h"
 
 #include "src/glincludes.h"
@@ -45,18 +50,18 @@ static const float kEnvIntensity = 0.5f;
 
 // default to a bright outdoor scene
 EnvIrradianceSH::EnvIrradianceSH()
-    : r_sh0(kEnvIntensity * glm::vec4( 0.000247f,  0.067317f,  0.049472f,  0.044667f)),
-      r_sh1(kEnvIntensity * glm::vec4( 0.067317f, -0.000247f,  0.038672f, -0.016214f)),
-      r_sh2(kEnvIntensity * glm::vec4( 0.049472f,  0.038672f,  0.041687f, -0.063235f)),
-      r_sh3(kEnvIntensity * glm::vec4( 0.044667f, -0.016214f, -0.063235f,  0.732629f)),
-      g_sh0(kEnvIntensity * glm::vec4( 0.005058f,  0.063251f,  0.042333f,  0.042035f)),
-      g_sh1(kEnvIntensity * glm::vec4( 0.063251f, -0.005058f,  0.032467f,  0.063713f)),
-      g_sh2(kEnvIntensity * glm::vec4( 0.042333f,  0.032467f,  0.003732f, -0.054176f)),
-      g_sh3(kEnvIntensity * glm::vec4( 0.042035f,  0.063713f, -0.054176f,  0.800368f)),
-      b_sh0(kEnvIntensity * glm::vec4( 0.003552f,  0.046977f,  0.030923f,  0.025932f)),
-      b_sh1(kEnvIntensity * glm::vec4( 0.046977f, -0.003552f,  0.024697f,  0.184137f)),
-      b_sh2(kEnvIntensity * glm::vec4( 0.030923f,  0.024697f, -0.052322f, -0.042096f)),
-      b_sh3(kEnvIntensity * glm::vec4( 0.025932f,  0.184137f, -0.042096f,  0.955088f)) {
+    : r_sh0(kEnvIntensity * glm::vec4(0.000247f,  0.067317f,  0.049472f,  0.044667f)),
+      r_sh1(kEnvIntensity * glm::vec4(0.067317f, -0.000247f,  0.038672f, -0.016214f)),
+      r_sh2(kEnvIntensity * glm::vec4(0.049472f,  0.038672f,  0.041687f, -0.063235f)),
+      r_sh3(kEnvIntensity * glm::vec4(0.044667f, -0.016214f, -0.063235f,  0.732629f)),
+      g_sh0(kEnvIntensity * glm::vec4(0.005058f,  0.063251f,  0.042333f,  0.042035f)),
+      g_sh1(kEnvIntensity * glm::vec4(0.063251f, -0.005058f,  0.032467f,  0.063713f)),
+      g_sh2(kEnvIntensity * glm::vec4(0.042333f,  0.032467f,  0.003732f, -0.054176f)),
+      g_sh3(kEnvIntensity * glm::vec4(0.042035f,  0.063713f, -0.054176f,  0.800368f)),
+      b_sh0(kEnvIntensity * glm::vec4(0.003552f,  0.046977f,  0.030923f,  0.025932f)),
+      b_sh1(kEnvIntensity * glm::vec4(0.046977f, -0.003552f,  0.024697f,  0.184137f)),
+      b_sh2(kEnvIntensity * glm::vec4(0.030923f,  0.024697f, -0.052322f, -0.042096f)),
+      b_sh3(kEnvIntensity * glm::vec4(0.025932f,  0.184137f, -0.042096f,  0.955088f)) {
 }
 
 LightingParams::LightingParams()

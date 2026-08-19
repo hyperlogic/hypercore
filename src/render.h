@@ -79,4 +79,4 @@ glm::vec3 ComputeColorFromSH(float dc_0, float dc_1, float dc_2);
 
 
 
-} // namespace hyper
+}  // namespace hyper

@@ -56,6 +56,12 @@ int SDLCALL Watch(void *userdata, SDL_Event* event) {
   return 1;
 }
 
+void SetWindowTitle(const char* title) {
+  if (ctx.window) {
+    SDL_SetWindowTitle(ctx.window, title);
+  }
+}
+
 int main(int argc, char *argv[]) {
   hyper::Log::SetAppName("hypercore");
 
@@ -144,7 +150,7 @@ int main(int argc, char *argv[]) {
                       SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #endif
 
-  ctx.window = SDL_CreateWindow(app->app_title().c_str(),
+  ctx.window = SDL_CreateWindow(app->GetAppTitle().c_str(),
                                 SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED, kWidth, kHeight,
                                 window_flags);

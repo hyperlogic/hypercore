@@ -50,6 +50,9 @@
 #include "src/texture.h"
 #include "src/util.h"
 
+// from sdl_main.cpp
+extern void SetWindowTitle(const char* title);
+
 namespace hyper {
 
 enum optionIndex {
@@ -211,6 +214,11 @@ AppBase::~AppBase() {
 }
 
 // Note: AppBase::Create() must be defined by the application
+
+void AppBase::SetAppTitle(const std::string& app_title) {
+  app_title_ = app_title;
+  SetWindowTitle(app_title.c_str());
+}
 
 AppBase::ParseResult AppBase::ParseArguments(int argc, const char* argv[]) {
   // optionparser expects a null item at the end.

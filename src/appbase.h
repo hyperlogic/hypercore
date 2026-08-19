@@ -49,7 +49,8 @@ class AppBase {
     QUIT_RESULT
   };
 
-  const std::string& app_title() const { return app_title_; }
+  const std::string& GetAppTitle() const { return app_title_; }
+  void SetAppTitle(const std::string& app_title);
   ParseResult ParseArguments(int argc, const char* argv[]);
   bool Init();
   bool IsFullscreen() const { return opt_.fullscreen; }

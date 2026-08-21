@@ -1026,8 +1026,7 @@ std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
   importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
   uint32_t flags = (aiProcess_Triangulate | aiProcess_GenNormals |
                     aiProcess_GenUVCoords | aiProcess_PopulateArmatureData |
-                    aiProcess_LimitBoneWeights | aiProcess_GlobalScale |
-                    aiProcess_ValidateDataStructure);
+                    aiProcess_LimitBoneWeights | aiProcess_GlobalScale);
   const aiScene* scene = importer.ReadFile(filename, flags);
 
   if (!scene) {

@@ -66,13 +66,19 @@ void BoneMesh::Render(const RenderParams& r_params, const LightingParams& l_para
   glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
   glm::vec3 camera_pos = glm::vec3(r_params.camera_mat[3]);
 
-  // build the abs_xform_vec_ aka boneMats
-  node_->BuildDepthFirstAbsXformVec(abs_xform_vec_);
-  assert(abs_xform_vec_.size() == inv_bind_pose_vec_.size());
-  // apply inv_bind_pose_vec_ for rendering
-  for (size_t i = 0; i < abs_xform_vec_.size(); i++) {
-    // AJT: TODO wtf, manny renders incorrectly, even in bind pose!
-    abs_xform_vec_[i] *= inv_bind_pose_vec_[i];
+  if (render_in_bind_pose_) {
+    abs_xform_vec_.resize(inv_bind_pose_vec_.size());
+    for (size_t i = 0; i < inv_bind_pose_vec_.size(); i++) {
+      abs_xform_vec_[i] = glm::identity<glm::mat4>();
+    }
+  } else {
+    // build the abs_xform_vec_ aka boneMats
+    node_->BuildDepthFirstAbsXformVec(abs_xform_vec_);
+    assert(abs_xform_vec_.size() == inv_bind_pose_vec_.size());
+    // apply inv_bind_pose_vec_ for rendering
+    for (size_t i = 0; i < abs_xform_vec_.size(); i++) {
+      abs_xform_vec_[i] *= inv_bind_pose_vec_[i];
+    }
   }
 
   // Upload bone matrices to the TBO.

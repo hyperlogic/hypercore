@@ -31,6 +31,8 @@ class BoneMesh : public Mesh {
 
   void Render(const RenderParams& r_params, const LightingParams& l_params) override;
 
+  void SetRenderInBindPose(bool v) { render_in_bind_pose_ = v; }
+  bool GetRenderInBindPose() const { return render_in_bind_pose_; }
  protected:
   void InitTbo();
 
@@ -38,6 +40,7 @@ class BoneMesh : public Mesh {
   std::vector<glm::mat4> abs_xform_vec_;
   uint32_t bone_tbo_ = 0;   // texture object for bone matrices
   uint32_t bone_buf_ = 0;   // buffer object backing the TBO
+  bool render_in_bind_pose_ = false;
 };
 
 }  // namespace hyper

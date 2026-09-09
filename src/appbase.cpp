@@ -94,7 +94,7 @@ const int TEXT_NUM_ROWS = 25;
 const glm::vec3 EYE_POS = glm::vec3(5.0f, 1.5f, 5.0f);
 const glm::vec3 CHAR_POS_OFFSET = glm::vec3(0.0f, 0.5f, 0.0f);
 
-static void Clear(glm::ivec2 windowSize, bool setViewport = true) {
+static void Clear(glm::ivec2 windowSize, bool setViewport = true, bool light_bg = false) {
   int width = windowSize.x;
   int height = windowSize.y;
   if (setViewport) {
@@ -106,7 +106,10 @@ static void Clear(glm::ivec2 windowSize, bool setViewport = true) {
   glBlendEquation(GL_FUNC_ADD);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-  glm::vec4 clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glm::vec4 clearColor(0.2f, 0.2f, 0.2f, 1.0f);
+  if (light_bg) {
+    clearColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+  }
   glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -554,7 +557,7 @@ bool AppBase::Render(float dt, const glm::ivec2& window_size) {
       fbo_->Bind();
     }
 
-    Clear(window_size, true);
+    Clear(window_size, true, scene_light_bg_);
 
     glm::mat4 camera_mat;
 
@@ -704,6 +707,7 @@ void AppBase::RenderImGui() {
       ImGui::MenuItem("Hide Floor", nullptr, &scene_hide_floor_);
       ImGui::MenuItem("Z-up", nullptr, &scene_z_up_);
       ImGui::MenuItem("CM Units", nullptr, &scene_cm_units_);
+      ImGui::MenuItem("Light Background", nullptr, &scene_light_bg_);
       ImGui::EndMenu();
     }
     if (!RenderImGuiMenuBarImpl()) {

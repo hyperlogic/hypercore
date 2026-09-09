@@ -134,6 +134,7 @@ class AppBase {
   bool scene_hide_floor_ = false;
   bool scene_z_up_ = false;
   bool scene_cm_units_ = false;
+  bool scene_light_bg_ = false;
 };
 
 }  // namespace hyper

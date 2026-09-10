@@ -18,6 +18,7 @@ namespace hyper {
 struct RenderParams;
 struct LightingParams;
 
+class DebugRenderer;
 class UberMaterial;
 class VertexArrayObject;
 
@@ -44,6 +45,7 @@ class Mesh {
                                                   glm::vec3 start, glm::vec3 end, float radius);
 
   virtual void Render(const RenderParams& r_params, const LightingParams& l_params);
+  virtual void DebugDrawNormals(DebugRenderer& debug_renderer, glm::vec3 color, float normal_len);
 
  protected:
   std::shared_ptr<VertexArrayObject> vao_;

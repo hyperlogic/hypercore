@@ -620,9 +620,10 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
     }
   }
 
-  auto posBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, posVec);
+  // GL_MAP_READ_BIT for debug draw!
+  auto posBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, posVec, GL_MAP_READ_BIT);
   auto uvBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, uvVec);
-  auto normBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, normVec);
+  auto normBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, normVec, GL_MAP_READ_BIT);
   std::shared_ptr<BufferObject> colorBuffer;
   if (mesh->HasVertexColors(0)) {
     colorBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, colorVec);

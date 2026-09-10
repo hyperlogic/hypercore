@@ -11,7 +11,9 @@
 #include <utility>
 #include <vector>
 
+#include "src/debugrenderer.h"
 #include "src/glincludes.h"
+#include "src/log.h"
 #include "src/program.h"
 #include "src/render.h"
 #include "src/texture.h"
@@ -62,6 +64,31 @@ void Mesh::Render(const RenderParams& r_params, const LightingParams& l_params) 
   }
 
   vao_->DrawElements(GL_TRIANGLES);
+}
+
+void Mesh::DebugDrawNormals(DebugRenderer& debug_renderer, glm::vec3 color, float normal_len) {
+  glm::mat4 model_mat = node_->abs_xform();
+  glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
+
+  auto position_buffer = vao_->GetAttribBuffer(mat_->GetProg()->GetAttribLoc("position"));
+  assert(position_buffer);
+  assert(position_buffer->element_size() == 3);
+  std::vector<glm::vec3> p_vec(position_buffer->num_elements());
+  position_buffer->Read(p_vec);
+
+  auto normal_buffer = vao_->GetAttribBuffer(mat_->GetProg()->GetAttribLoc("normal"));
+  assert(normal_buffer);
+  assert(normal_buffer->element_size() == 3);
+  std::vector<glm::vec3> n_vec(normal_buffer->num_elements());
+  normal_buffer->Read(n_vec);
+
+  assert(p_vec.size() == n_vec.size());
+
+  for (size_t i = 0; i < p_vec.size(); i++) {
+    glm::vec3 p = XformPoint(model_mat, p_vec[i]);
+    glm::vec3 n = normal_model_mat * n_vec[i];
+    debug_renderer.Line(p, p + normal_len * n, color);
+  }
 }
 
 }  // namespace hyper

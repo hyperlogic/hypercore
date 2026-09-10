@@ -7,8 +7,10 @@
 
 #include <stdint.h>
 
+#include <cstring>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include <glm/glm.hpp>
 
@@ -63,6 +65,7 @@ class BufferObject {
   void Update(const std::vector<uint32_t>& data);
 
   void Read(std::vector<uint32_t>& data);
+  void Read(std::vector<glm::vec3>& data);
 
   uint32_t GetObj() const { return obj_; }
   int element_size() const { return element_size_; }
@@ -91,10 +94,11 @@ class VertexArrayObject {
     return element_buffer_;
   }
   void DrawElements(int mode) const;
+  std::shared_ptr<BufferObject> GetAttribBuffer(int loc) const;
 
  protected:
   uint32_t obj_;
-  std::vector<std::shared_ptr<BufferObject>> attrib_buffer_vec_;
+  std::unordered_map<int, std::shared_ptr<BufferObject>> attrib_buffer_map_;
   std::shared_ptr<BufferObject> element_buffer_;
 };
 

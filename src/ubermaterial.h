@@ -97,6 +97,8 @@ class UberMaterial {
   void SetSpecularExponent(float specular_exponent) { specular_exponent_ = specular_exponent; }
   float GetSpecularExponent() const { return specular_exponent_; }
 
+  std::shared_ptr<Program> GetProg() const { return prog_; }
+
  protected:
   std::string name_;
   UberShaderVariantKey key_;

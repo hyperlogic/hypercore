@@ -176,6 +176,19 @@ void BufferObject::Read(std::vector<uint32_t>& data) {
   Unbind();
 }
 
+void BufferObject::Read(std::vector<glm::vec3>& data) {
+  Bind();
+  size_t buffer_size = sizeof(glm::vec3) * data.size();
+  assert(buffer_size == (element_size_ * sizeof(float) * num_elements_));
+  // void* raw_buffer = glMapBuffer(target_, GL_READ_ONLY);
+  void* raw_buffer = glMapBufferRange(target_, 0, buffer_size, GL_MAP_READ_BIT);
+  if (raw_buffer) {
+    memcpy(reinterpret_cast<void*>(data.data()), raw_buffer, buffer_size);
+  }
+  glUnmapBuffer(target_);
+  Unbind();
+}
+
 VertexArrayObject::VertexArrayObject() {
   glGenVertexArrays(1, &obj_);
 }
@@ -200,7 +213,7 @@ void VertexArrayObject::SetAttribBuffer(int loc, std::shared_ptr<BufferObject> a
   glVertexAttribPointer(loc, attrib_buffer->element_size_, GL_FLOAT, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(loc);
   attrib_buffer->Unbind();
-  attrib_buffer_vec_.push_back(attrib_buffer);
+  attrib_buffer_map_[loc] = attrib_buffer;
   Unbind();
 }
 
@@ -219,6 +232,14 @@ void VertexArrayObject::DrawElements(int mode) const {
   glDrawElements(static_cast<GLenum>(mode), element_buffer_->num_elements_,
                  GL_UNSIGNED_INT, nullptr);
   Unbind();
+}
+
+std::shared_ptr<BufferObject> VertexArrayObject::GetAttribBuffer(int loc) const {
+  auto iter = attrib_buffer_map_.find(loc);
+  if (iter != attrib_buffer_map_.end()) {
+    return iter->second;
+  }
+  return nullptr;
 }
 
 }  // namespace hyper

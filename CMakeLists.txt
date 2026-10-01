@@ -137,6 +137,7 @@ add_library(hypercore STATIC
     src/inputbuddy.cpp
     src/log.cpp
     src/node.cpp
+    src/npyimport.cpp
     src/mesh.cpp
     src/program.cpp
     src/render.cpp

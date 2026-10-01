@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -42,6 +43,7 @@
 #include "src/image.h"
 #include "src/log.h"
 #include "src/mesh.h"
+#include "src/npyimport.h"
 #include "src/program.h"
 #include "src/texture.h"
 #include "src/ubermaterial.h"
@@ -1016,6 +1018,14 @@ std::shared_ptr<Asset> AssetImport(const std::string& filename) {
 }
 
 std::shared_ptr<Asset> AssetImportAbs(const std::string& filename) {
+  // Pickled poselib SkeletonState files are not handled by assimp.
+  std::string ext = std::filesystem::path(filename).extension().string();
+  std::transform(ext.begin(), ext.end(), ext.begin(),
+                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  if (ext == ".npy") {
+    return AssetImportNpyAbs(filename);
+  }
+
   std::shared_ptr<Asset> asset = std::make_shared<Asset>();
   const uint32_t severityFlags = (Assimp::Logger::Debugging |
                                   Assimp::Logger::Info |

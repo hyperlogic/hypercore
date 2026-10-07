@@ -380,9 +380,21 @@ bool AppBase::Init() {
     virtual_left_stick_.y += down ? -1.0f : 1.0f;
   });
 
+  input_buddy_->SetOnKey(SDLK_c, [this](bool down, uint16_t mod) {
+    if (down) {
+      scene_cm_units_ = !scene_cm_units_;
+    }
+  });
+
+  input_buddy_->SetOnKey(SDLK_z, [this](bool down, uint16_t mod) {
+    if (down) {
+      scene_z_up_ = !scene_z_up_;
+    }
+  });
+
   input_buddy_->SetOnKey(SDLK_f, [this](bool down, uint16_t mod) {
     if (down) {
-      opt_.useFlyCam = !opt_.useFlyCam;
+      scene_hide_floor_ = !scene_hide_floor_;
     }
   });
 
@@ -704,9 +716,9 @@ void AppBase::RenderImGui() {
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Scene")) {
-      ImGui::MenuItem("Hide Floor", nullptr, &scene_hide_floor_);
-      ImGui::MenuItem("Z-up", nullptr, &scene_z_up_);
-      ImGui::MenuItem("CM Units", nullptr, &scene_cm_units_);
+      ImGui::MenuItem("Hide Floor", "f", &scene_hide_floor_);
+      ImGui::MenuItem("Z-up", "z", &scene_z_up_);
+      ImGui::MenuItem("CM Units", "c", &scene_cm_units_);
       ImGui::MenuItem("Light Background", nullptr, &scene_light_bg_);
       ImGui::EndMenu();
     }

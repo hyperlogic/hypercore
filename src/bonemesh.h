@@ -30,11 +30,18 @@ class BoneMesh : public Mesh {
   ~BoneMesh() override;
 
   void Render(const RenderParams& r_params, const LightingParams& l_params) override;
+  void RenderWireframe(const RenderParams& r_params, glm::vec4 color) override;
 
   void SetRenderInBindPose(bool v) { render_in_bind_pose_ = v; }
   bool GetRenderInBindPose() const { return render_in_bind_pose_; }
  protected:
   void InitTbo();
+  // Computes abs_xform_vec_ and uploads it to the bone TBO.
+  void UpdateBoneMats();
+  // Binds the bone TBO to a texture unit and sets the boneMats uniform on prog.
+  void BindBoneMats(const Program& prog) const;
+  void AddWireframeMacros(Program& prog) const override;
+  void AddWireframeAttribs(VertexArrayObject& wireframe_vao) const override;
 
   std::vector<glm::mat4> inv_bind_pose_vec_;
   std::vector<glm::mat4> abs_xform_vec_;

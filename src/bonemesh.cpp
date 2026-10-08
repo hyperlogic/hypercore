@@ -59,13 +59,7 @@ void BoneMesh::InitTbo() {
   glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
-void BoneMesh::Render(const RenderParams& r_params, const LightingParams& l_params) {
-  // AJT: TODO what is the proper model view and normal mat for this mesh?
-  glm::mat4 model_mat = glm::mat4(1.0f);
-  glm::mat4 view_mat = glm::inverse(r_params.camera_mat);
-  glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
-  glm::vec3 camera_pos = glm::vec3(r_params.camera_mat[3]);
-
+void BoneMesh::UpdateBoneMats() {
   if (render_in_bind_pose_) {
     abs_xform_vec_.resize(inv_bind_pose_vec_.size());
     for (size_t i = 0; i < inv_bind_pose_vec_.size(); i++) {
@@ -87,6 +81,24 @@ void BoneMesh::Render(const RenderParams& r_params, const LightingParams& l_para
                   abs_xform_vec_.size() * sizeof(glm::mat4),
                   abs_xform_vec_.data());
   glBindBuffer(GL_TEXTURE_BUFFER, 0);
+}
+
+void BoneMesh::BindBoneMats(const Program& prog) const {
+  // Bind the bone matrix TBO to texture unit 4 (units 0-1 used by material).
+  static const int32_t kBoneTexUnit = 4;
+  glActiveTexture(GL_TEXTURE0 + kBoneTexUnit);
+  glBindTexture(GL_TEXTURE_BUFFER, bone_tbo_);
+  prog.SetUniform("boneMats", kBoneTexUnit);
+}
+
+void BoneMesh::Render(const RenderParams& r_params, const LightingParams& l_params) {
+  // AJT: TODO what is the proper model view and normal mat for this mesh?
+  glm::mat4 model_mat = glm::mat4(1.0f);
+  glm::mat4 view_mat = glm::inverse(r_params.camera_mat);
+  glm::mat3 normal_model_mat = glm::transpose(glm::inverse(glm::mat3(model_mat)));
+  glm::vec3 camera_pos = glm::vec3(r_params.camera_mat[3]);
+
+  UpdateBoneMats();
 
   mat_->Bind();
 
@@ -115,13 +127,33 @@ void BoneMesh::Render(const RenderParams& r_params, const LightingParams& l_para
     mat_->prog()->SetUniform("light_ambient_color", l_params.ambient_color);
   }
 
-  // Bind the bone matrix TBO to texture unit 4 (units 0-1 used by material).
-  static const int32_t kBoneTexUnit = 4;
-  glActiveTexture(GL_TEXTURE0 + kBoneTexUnit);
-  glBindTexture(GL_TEXTURE_BUFFER, bone_tbo_);
-  mat_->prog()->SetUniform("boneMats", kBoneTexUnit);
+  BindBoneMats(*mat_->prog());
 
-  vao_->DrawElements(GL_TRIANGLES);
+  DrawTrianglesWithOffset();
+}
+
+void BoneMesh::AddWireframeMacros(Program& prog) const {
+  prog.AddMacro("BONES", "#define HAS_BONES");
+}
+
+void BoneMesh::AddWireframeAttribs(VertexArrayObject& wireframe_vao) const {
+  auto weights_buffer = vao_->GetAttribBuffer(mat_->GetProg()->GetAttribLoc("boneWeights"));
+  auto indices_buffer = vao_->GetAttribBuffer(mat_->GetProg()->GetAttribLoc("boneIndices"));
+  assert(weights_buffer && indices_buffer);
+  wireframe_vao.SetAttribBuffer(wireframe_prog_->GetAttribLoc("boneWeights"), weights_buffer);
+  wireframe_vao.SetAttribBuffer(wireframe_prog_->GetAttribLoc("boneIndices"), indices_buffer);
+}
+
+void BoneMesh::RenderWireframe(const RenderParams& r_params, glm::vec4 color) {
+  InitWireframe();
+  if (!wireframe_prog_ || !wireframe_vao_) {
+    return;
+  }
+  UpdateBoneMats();
+  wireframe_prog_->Bind();
+  BindBoneMats(*wireframe_prog_);
+  // match BoneMesh::Render, which uses an identity model matrix.
+  DrawWireframe(r_params, glm::mat4(1.0f), color);
 }
 
 }  // namespace hyper

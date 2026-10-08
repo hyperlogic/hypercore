@@ -18,6 +18,6 @@ out vec4 frag_color;
 
 void main(void)
 {
-    gl_Position = modelViewProjMat * vec4(position, 1);
+  gl_Position = modelViewProjMat * vec4(position, 1);
 	frag_color = color;
 }

@@ -630,7 +630,7 @@ static std::shared_ptr<MeshBuffers> ImportMeshBuffers(const aiMesh* mesh) {
   if (mesh->HasVertexColors(0)) {
     colorBuffer = std::make_shared<BufferObject>(GL_ARRAY_BUFFER, colorVec);
   }
-  auto indexBuffer = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, indexVec);
+  auto indexBuffer = std::make_shared<BufferObject>(GL_ELEMENT_ARRAY_BUFFER, indexVec, GL_MAP_READ_BIT);
 
   return std::make_shared<MeshBuffers>(posBuffer, uvBuffer, normBuffer, colorBuffer, indexBuffer);
 }

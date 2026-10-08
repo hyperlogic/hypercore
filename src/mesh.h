@@ -19,6 +19,7 @@ struct RenderParams;
 struct LightingParams;
 
 class DebugRenderer;
+class Program;
 class UberMaterial;
 class VertexArrayObject;
 
@@ -45,11 +46,25 @@ class Mesh {
                                                   glm::vec3 start, glm::vec3 end, float radius);
 
   virtual void Render(const RenderParams& r_params, const LightingParams& l_params);
-  virtual void DebugDrawNormals(DebugRenderer& debug_renderer, glm::vec3 color, float normal_len);
+  virtual void RenderWireframe(const RenderParams& r_params, glm::vec4 color);
 
  protected:
+  // Lazily builds wireframe_prog_ and wireframe_vao_.
+  void InitWireframe();
+  // Override to add defines (e.g. skinning) before the shader is compiled.
+  virtual void AddWireframeMacros(Program& prog) const {}
+  // Override to attach extra attribs (e.g. bone weights) to the wireframe vao.
+  virtual void AddWireframeAttribs(VertexArrayObject& wireframe_vao) const {}
+  // Draws the shaded triangles with a small polygon offset so wireframe lines
+  // drawn over the mesh do not z-fight with it.
+  void DrawTrianglesWithOffset() const;
+  // Draws the wireframe with an already computed model matrix.
+  void DrawWireframe(const RenderParams& r_params, const glm::mat4& model_mat, glm::vec4 color);
+
   std::shared_ptr<VertexArrayObject> vao_;
   std::shared_ptr<UberMaterial> mat_;
+  std::shared_ptr<VertexArrayObject> wireframe_vao_;
+  std::shared_ptr<Program> wireframe_prog_;
   std::shared_ptr<Node> node_;
 };
 

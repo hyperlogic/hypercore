@@ -8,13 +8,12 @@
 //
 
 /*%%HEADER%%*/
-
-in vec4 frag_color;
+uniform vec4 color;
 out vec4 out_color;
 
 void main()
 {
   // pre-multiplied alpha blending
-  out_color.rgb = frag_color.a * frag_color.rgb;
-  out_color.a = frag_color.a;
+  out_color.rgb = color.a * color.rgb;
+  out_color.a = color.a;
 }

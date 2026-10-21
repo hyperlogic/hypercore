@@ -22,7 +22,7 @@ set(SDL_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 # Use source relase of sdl2.
 FetchContent_Declare(
     SDL2
-    URL https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-2.28.5.tar.gz
+    URL https://libsdl.org/release/SDL2-2.32.10.tar.gz
 )
 
 # Make SDL2 available
@@ -41,7 +41,7 @@ set(glew-cmake_BUILD_STATIC ON CACHE BOOL "" FORCE)   # Build static lib
 # Use pre-built release archive
 FetchContent_Declare(
     glew
-    URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
+    URL https://github.com/nigels-com/glew/releases/download/glew-2.3.1/glew-2.3.1.tgz
     SOURCE_SUBDIR build/cmake
 )
 
@@ -73,7 +73,7 @@ FetchContent_MakeAvailable(stb)
 FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.2
+    GIT_TAG v3.12.0
 )
 FetchContent_MakeAvailable(json)
 
